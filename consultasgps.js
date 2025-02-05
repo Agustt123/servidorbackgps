@@ -1,6 +1,6 @@
 const http = require("http");
 const mysql = require("mysql2/promise"); // Usar mysql2 con soporte para promesas
-const port = 13001;
+const port = 13000;
 const hostname = "localhost";
 
 process.env.TZ = 'UTC';
@@ -38,7 +38,7 @@ const dataStore = {}; // Almacén de datos en memoria
 
 // Iniciar el servidor
 const server = http.createServer(async (req, res) => {
-  if (req.method !== "POST" || req.url !== "/consultar") {
+  if (req.method !== "POST" || req.url !== "/") {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Endpoint no encontrado" }));
     return;
@@ -170,5 +170,5 @@ const simulateDataInsertion = () => {
 
 // Iniciar el servidor
 server.listen(port, hostname, async () => {
-  console.log(`Server running at http://${hostname}:${port}/consultar`);
+  console.log(`Server running at http://${hostname}:${port}/`);
 });
