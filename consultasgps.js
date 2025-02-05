@@ -1,7 +1,7 @@
 const http = require("http");
 const mysql = require("mysql2/promise"); // Usar mysql2 con soporte para promesas
 const port = 13000;
-const hostname = "http://backgps2.lightdata.com.ar";
+const hostname = "backgps2.lightdata.com.ar";
 
 process.env.TZ = 'UTC';
 
