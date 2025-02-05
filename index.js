@@ -3,7 +3,7 @@ const mysql = require("mysql2/promise");
 const amqp = require("amqplib"); // Importar amqplib
 const { redisClient } = require("./dbconfig");
 
-const port = 13000;
+const port = 12500;
 const hostname = "localhost";
 
 process.env.TZ = 'UTC';
