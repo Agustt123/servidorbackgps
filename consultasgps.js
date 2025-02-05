@@ -27,22 +27,22 @@ const formatLocalDate = (date) => {
   date.setHours(date.getHours() - 3); // Ajuste de zona horaria
   return date.toISOString().replace("T", " ").substring(0, 19);
 };
+
 const currentDate = new Date();
 const year = currentDate.getFullYear();
 const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
 const day = ("0" + currentDate.getDate()).slice(-2);
 
-
-
 const tableName = `gps_${day}_${month}_${year}`;
 const dataStore = {}; // Almacén de datos en memoria
 
-
-
-//lo unico que vas haces en este script es escuchar la cola gps
-
+// Iniciar el servidor
 const server = http.createServer(async (req, res) => {
-  if (req.method !== "POST") return;
+  if (req.method !== "POST" || req.url !== "/consultar") {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Endpoint no encontrado" }));
+    return;
+  }
 
   let body = "";
   req.on("data", chunk => (body += chunk.toString()));
@@ -52,7 +52,6 @@ const server = http.createServer(async (req, res) => {
       const connection = await pool.getConnection();
       
       switch (dataEntrada.operador) {
-        
         case "getActual":
           await getActualData(connection, dataEntrada, res);
           break;
@@ -71,6 +70,7 @@ const server = http.createServer(async (req, res) => {
         case "xvariable":
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify(dataStore));
+          break; // Añadir break aquí
         default:
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Operador inválido" }));
@@ -83,8 +83,6 @@ const server = http.createServer(async (req, res) => {
     }
   });
 });
-
-// Función para crear la tabla si no existe
 
 // Función para obtener datos actuales
 async function getActualData(connection, data, res) {
@@ -168,9 +166,9 @@ const simulateDataInsertion = () => {
 };
 
 // Iniciar la simulación
-//simulateDataInsertion();
+// simulateDataInsertion();
 
 // Iniciar el servidor
 server.listen(port, hostname, async () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+  console.log(`Server running at http://${hostname}:${port}/consultar`);
 });
