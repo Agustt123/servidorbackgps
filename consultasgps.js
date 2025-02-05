@@ -1,6 +1,9 @@
-const http = require("http");
-const mysql = require("mysql2/promise"); // Usar mysql2 con soporte para promesas
-const port = 13000;
+const express = require("express");
+const mysql = require("mysql2/promise");
+const bodyParser = require("body-parser");
+
+const app = express();
+const port = process.env.PORT || 13000; // Usa un puerto definido en la variable de entorno o 13000 por defecto
 const hostname = "localhost";
 
 process.env.TZ = 'UTC';
@@ -18,13 +21,16 @@ const dbConfig = {
 const pool = mysql.createPool(dbConfig);
 const Atablas = {};
 
+// Middleware para parsear el cuerpo de las solicitudes
+app.use(bodyParser.json());
+
 const getCurrentDateString = () => {
   const currentDate = new Date();
   return `${currentDate.getFullYear()}${("0" + (currentDate.getMonth() + 1)).slice(-2)}${("0" + currentDate.getDate()).slice(-2)}`;
 };
 
 const formatLocalDate = (date) => {
-  date.setHours(date.getHours() - 3); // Ajuste de zona horaria
+  date.setHours(date.getHours() - 3);
   return date.toISOString().replace("T", " ").substring(0, 19);
 };
 
@@ -34,57 +40,44 @@ const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
 const day = ("0" + currentDate.getDate()).slice(-2);
 
 const tableName = `gps_${day}_${month}_${year}`;
-const dataStore = {}; // Almacén de datos en memoria
 
-// Iniciar el servidor
-const server = http.createServer(async (req, res) => {
-  if (req.method !== "POST" || req.url !== "/") {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Endpoint no encontrado" }));
-    return;
-  }
-
-  let body = "";
-  req.on("data", chunk => (body += chunk.toString()));
-  req.on("end", async () => {
-    try {
-      const dataEntrada = JSON.parse(body);
-      const connection = await pool.getConnection();
-      
-      switch (dataEntrada.operador) {
-        case "getActual":
-          await getActualData(connection, dataEntrada, res);
-          break;
-        case "getHistorial":
-          await getHistorial(connection, dataEntrada, res);
-          break;
-        case "getAll":
-          await getAll(connection, dataEntrada, res);
-          break;
-        case "cadeteFiltrado":
-          await obtenerHorasCadetesPorFecha(connection, dataEntrada, res);
-          break;
-        case "cadeteFiltradoUnico":
-          await obtenerHorasCadetePorFecha(connection, dataEntrada, res);
-          break;
-        case "xvariable":
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify(dataStore));
-          break; // Añadir break aquí
-        default:
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Operador inválido" }));
-      }
-      connection.release();
-    } catch (error) {
-      console.error(error);
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Error en el servidor" }));
+// Definición de rutas
+app.post("/consultar", async (req, res) => {
+  const dataEntrada = req.body;
+  const connection = await pool.getConnection();
+  
+  try {
+    switch (dataEntrada.operador) {
+      case "getActual":
+        await getActualData(connection, dataEntrada, res);
+        break;
+      case "getHistorial":
+        await getHistorial(connection, dataEntrada, res);
+        break;
+      case "getAll":
+        await getAll(connection, dataEntrada, res);
+        break;
+      case "cadeteFiltrado":
+        await obtenerHorasCadetesPorFecha(connection, dataEntrada, res);
+        break;
+      case "cadeteFiltradoUnico":
+        await obtenerHorasCadetePorFecha(connection, dataEntrada, res);
+        break;
+      case "xvariable":
+        res.status(400).json(dataStore);
+        break;
+      default:
+        res.status(400).json({ error: "Operador inválido" });
     }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error en el servidor" });
+  } finally {
+    connection.release();
+  }
 });
 
-// Función para obtener datos actuales
+
 async function getActualData(connection, data, res) {
   const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
                  FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0 
@@ -166,9 +159,9 @@ const simulateDataInsertion = () => {
 };
 
 // Iniciar la simulación
-// simulateDataInsertion();
+//simulateDataInsertion();
 
 // Iniciar el servidor
-server.listen(port, hostname, async () => {
+app.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
