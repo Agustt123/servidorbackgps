@@ -1,3 +1,4 @@
+//require('dotenv').config();
 const express = require('express');
 const mysql = require("mysql2/promise");
 const redis = require('redis');
@@ -70,23 +71,34 @@ async function getHistorial(connection, data, res , tableName) {
 async function getAll(connection, data, res, tableName) {
   const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;
   const [results] = await connection.execute(query, [data.didempresa]);
-  const response = {
-    gps: results
-  };
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(response));
-}
-
-
-async function obtenerHorasCadetesPorFecha(connection, data, res, tableName) {
-  const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND DATE(autofecha) = ?`;
-	console.log(query);
-	
-  const [results] = await connection.execute(query, [data.didempresa, data.fecha]);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(results));
 }
+
+async function obtenerHorasCadetesPorFecha(connection, data, res) {
+  console.log("aaa");
+  
+  // Obtener la fecha en formato YYYY-MM-DD
+  const fecha = data.fecha; // Por ejemplo, "2025-02-05"
+  const [year, month, day] = fecha.split('-');
+  
+  // Generar el nombre de la tabla sin espacios
+  const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
+
+  // Verificar el nombre de la tabla
+  console.log(`Nombre de la tabla: '${claveFechadb}'`); // Asegúrate de que no haya espacios
+
+  // Modificar la consulta para extraer solo la parte de la fecha de autofecha
+  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha LIKE ?`;
+
+  console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
+  const [results] = await connection.execute(query, [data.didempresa, `${data.fecha}%`]);
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(results));
+}
+
+
 
 async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND DATE(autofecha) = ?`;
@@ -115,14 +127,21 @@ app.post('/consultas', async (req, res) => {
 	//await redisClient.connect();
 	
     try {
-		
+		console.log(dataEntrada.operador);
+    
 		if(dataEntrada.operador == "getActual"){		
 			await getActualData(connection, dataEntrada, res,claveFechaDb);
 		} else if (dataEntrada.operador == "getHistorial"){
-			await getHistorial(connection, dataEntrada, res, claveFechaDb);			
+  
+			await getHistorial(connection, dataEntrada, res, claveFechaDb);		
+      	
 		} else if (dataEntrada.operador == "getAll"){
 			await getAll(connection, dataEntrada, res, claveFechaDb);
+      
 		} else if (dataEntrada.operador == "cadeteFiltrado"){
+     
+   
+      
 			await obtenerHorasCadetesPorFecha(connection, dataEntrada, res, claveFechaDb);
 		} else if (dataEntrada.operador == "cadeteFiltradoUnico"){
 			await obtenerHorasCadetePorFecha(connection, dataEntrada, res , claveFechaDb);
