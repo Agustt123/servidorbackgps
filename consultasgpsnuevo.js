@@ -94,8 +94,12 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
   const [results] = await connection.execute(query, [data.didempresa, `${data.fecha}%`]);
 
+  const response = {
+    gps: results
+  };
+
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(results));
+  res.end(JSON.stringify(response));
 }
 
 
