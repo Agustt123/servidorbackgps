@@ -81,6 +81,8 @@ async function getAll(connection, data, res, tableName) {
 
 async function obtenerHorasCadetesPorFecha(connection, data, res, tableName) {
   const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND DATE(autofecha) = ?`;
+	console.log(query);
+	
   const [results] = await connection.execute(query, [data.didempresa, data.fecha]);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(results));
