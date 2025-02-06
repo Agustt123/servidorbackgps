@@ -153,7 +153,14 @@ async function insertData(connection, data) {
   try {
     await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
     console.log("Datos insertados:", { empresa, ilat, ilong, cadete, bateria, velocidad });
+  if (insertResult.affectedRows > 0) {
+      const updateQuery = `
+      UPDATE ${tableName}
+      SET superado = 1
+      WHERE didempresa = ? AND cadete = ? AND id != ?`;
 
+      await connection.execute(updateQuery, [empresa, cadete, idinsertado]); // Usa parámetros para evitar inyección SQL
+    }
     // Guardar en Redis después de insertar en la base de datos
     await saveToRedis(data);
   } catch (error) {
