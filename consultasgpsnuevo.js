@@ -1,4 +1,3 @@
-//require('dotenv').config();
 const express = require('express');
 const mysql = require("mysql2/promise");
 const redis = require('redis');
@@ -71,9 +70,14 @@ async function getHistorial(connection, data, res , tableName) {
 async function getAll(connection, data, res, tableName) {
   const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;
   const [results] = await connection.execute(query, [data.didempresa]);
+  const response = {
+    gps: results
+  };
+
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(results));
+  res.end(JSON.stringify(response));
 }
+
 
 async function obtenerHorasCadetesPorFecha(connection, data, res, tableName) {
   const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND DATE(autofecha) = ?`;
