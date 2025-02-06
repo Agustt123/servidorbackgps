@@ -9,10 +9,10 @@ const hostname = "localhost";
 process.env.TZ = 'UTC';
 
 const dbConfig = {
-  host: "10.70.0.67",
-  user: "backgos",
-  password: "pt25pt26pt",
-  database: "gpsdata",
+  host: "localhost",
+  user: "logisticaA",
+  password: "logisticaa",
+  database: "logisticaa",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -96,13 +96,14 @@ async function createTableIfNotExists(connection) {
 }
 
 // Función para guardar datos en Redis
+// Función para guardar datos en Redis
 async function saveToRedis(data) {
   const { empresa, cadete, ilat, ilong, bateria, velocidad } = data;
-  
+
   const dateKey = getCurrentDateString(); // Obtener la fecha en el formato "YYYYMMDD"
   const formattedDate = `${dateKey.substring(0, 4)}_${dateKey.substring(4, 6)}_${dateKey.substring(6, 8)}`; // Formato "YYYY_MM_DD"
 
-  const redisKey = `gps`; // Clave principal en Redis
+  const redisKey = tableName;
 
   // Crear la estructura en Redis
   const entry = {
@@ -118,18 +119,15 @@ async function saveToRedis(data) {
     const existingData = await redisClient.get(redisKey);
     let dataToStore = existingData ? JSON.parse(existingData) : {};
 
-    if (!dataToStore[formattedDate]) {
-      dataToStore[formattedDate] = {};
+    if (!dataToStore[empresa]) {
+      dataToStore[empresa] = {};
     }
-    if (!dataToStore[formattedDate][empresa]) {
-      dataToStore[formattedDate][empresa] = {};
-    }
-    if (!dataToStore[formattedDate][empresa][cadete]) {
-      dataToStore[formattedDate][empresa][cadete] = [];
+    if (!dataToStore[empresa][cadete]) {
+      dataToStore[empresa][cadete] = [];
     }
 
     // Agregar el nuevo registro
-    dataToStore[formattedDate][empresa][cadete].push(entry);
+    dataToStore[empresa][cadete].push(entry);
 
     // Guardar en Redis
     await redisClient.set(redisKey, JSON.stringify(dataToStore));
@@ -138,6 +136,7 @@ async function saveToRedis(data) {
     console.error("Error al guardar en Redis:", error);
   }
 }
+
 
 // Función para insertar datos
 async function insertData(connection, data) {
