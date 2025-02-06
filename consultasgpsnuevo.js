@@ -98,9 +98,53 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
   const [results] = await connection.execute(query, [data.didempresa, `${data.fecha}%`]);
 
+  // Estructurar la respuesta
+  const response = {};
+  
+  // Agrupar resultados por empresa
+  results.forEach(row => {
+    const empresaId = row.didempresa; // Suponiendo que este es el ID de la empresa
+    const choferId = row.cadete; // Suponiendo que este es el ID del chofer
+
+    // Inicializar la estructura de la empresa si no existe
+    if (!response[empresaId]) {
+      response[empresaId] = {};
+    }
+
+    // Agregar las coordenadas directamente bajo el ID del chofer
+    if (!response[empresaId][choferId]) {
+      response[empresaId][choferId] = []; // Inicializar array para coordenadas
+    }
+
+    // Formatear autofecha
+    const formattedAutofecha = formatFecha(row.autofecha);
+
+    // Agregar las coordenadas
+    response[empresaId][choferId].push({
+      autofecha: formattedAutofecha,
+      iliat: row.ilat,
+      ilog: row.ilog,
+    });
+  });
+
+  // Devolver la respuesta en formato JSON
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(results));
+  res.end(JSON.stringify(response));
 }
+
+// Función para formatear la fecha
+function formatFecha(isoString) {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Mes empieza en 0
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 
 
 
