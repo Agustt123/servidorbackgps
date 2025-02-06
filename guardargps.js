@@ -149,11 +149,16 @@ async function insertData(connection, data) {
   }
 
   const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) 
-                        VALUES (?, ?, ?, ?, ?, ?, 0, now())`;
+                        VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`;
+
   try {
-    await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
+    const [insertResult] = await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
     console.log("Datos insertados:", { empresa, ilat, ilong, cadete, bateria, velocidad });
-  if (insertResult.affectedRows > 0) {
+
+    // Verificar si se insertó un nuevo registro
+    if (insertResult.affectedRows > 0) {
+      const idinsertado = insertResult.insertId; // Captura el ID del nuevo registro
+
       const updateQuery = `
       UPDATE ${tableName}
       SET superado = 1
@@ -161,12 +166,14 @@ async function insertData(connection, data) {
 
       await connection.execute(updateQuery, [empresa, cadete, idinsertado]); // Usa parámetros para evitar inyección SQL
     }
+
     // Guardar en Redis después de insertar en la base de datos
     await saveToRedis(data);
   } catch (error) {
     console.error("Error al insertar datos:", error);
   }
 }
+
 
 // Función para escuchar mensajes desde RabbitMQ
 async function listenToRabbitMQ() {
