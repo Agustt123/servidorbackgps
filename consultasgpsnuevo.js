@@ -122,7 +122,7 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
     // Agregar las coordenadas
     response[empresaId][choferId].push({
       autofecha: formattedAutofecha,
-      iliat: row.ilat,
+      ilat: row.ilat,
       ilog: row.ilog,
     });
   });
