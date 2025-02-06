@@ -111,16 +111,16 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
       response[empresaId] = {};
     }
 
-    // Agregar las coordenadas directamente bajo el ID del chofer
     if (!response[empresaId][choferId]) {
-      response[empresaId][choferId] = []; // Inicializar array para coordenadas
+      response[empresaId][choferId] = { coordenadas: [] }; // Inicializar coordenadas como un array
     }
 
     // Formatear autofecha
     const formattedAutofecha = formatFecha(row.autofecha);
+  
 
     // Agregar las coordenadas
-    response[empresaId][choferId].push({
+    response[empresaId][choferId].coordenadas.push({
       autofecha: formattedAutofecha,
       ilat: row.ilat,
       ilog: row.ilog,
