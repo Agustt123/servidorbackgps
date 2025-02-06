@@ -33,6 +33,8 @@ const formatLocalDate = (date) => {
 };
 
 const currentDate = new Date();
+currentDate.setHours(currentDate.getHours() - 3); // Restar 3 horas
+
 const year = currentDate.getFullYear();
 const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
 const day = ("0" + currentDate.getDate()).slice(-2);
@@ -208,12 +210,12 @@ async function simulateMessageSending() {
     
     const simulatedData = {
       operador: "guardar",
-      empresa: Math.floor(Math.random() * 90), // Empresa aleatoria
+      empresa: 999, // Empresa aleatoria
       cadete: 999,
-      ilat: Math.random() * 90, // Latitud aleatoria
-      ilong: Math.random() * 180, // Longitud aleatoria
-      bateria: Math.random() * 100, // Batería aleatoria
-      velocidad: Math.random() * 120 // Velocidad aleatoria
+      ilat:99 , // Latitud aleatoria
+      ilong:99 , // Longitud aleatoria
+      bateria: 99, // Batería aleatoria
+      velocidad:99  // Velocidad aleatoria
     };
 
     // Enviar el mensaje
@@ -229,10 +231,11 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   res.end('Servidor en funcionamiento\n');
 });
+//simulateMessageSending()
 
 // Iniciar el servidor
 server.listen(port, hostname, async () => {
   console.log(`Server running at http://${hostname}:${port}/`);
   await listenToRabbitMQ(); // Iniciar la escucha de RabbitMQ
-  
 });
+
