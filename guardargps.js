@@ -9,10 +9,10 @@ const hostname = "localhost";
 process.env.TZ = 'UTC';
 
 const dbConfig = {
-  host: "localhost",
-  user: "logisticaA",
-  password: "logisticaa",
-  database: "logisticaa",
+  host: "10.70.0.67",
+  user: "backgos",
+  password: "pt25pt26pt",
+  database: "gpsdata",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
