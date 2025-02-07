@@ -11,7 +11,7 @@ const hostname = "localhost";
 process.env.TZ = 'UTC';
 
 const dbConfig = {
-  host: "10.70.0.67",
+  host: "localhost",
   user: "backgos",
   password: "pt25pt26pt",
   database: "gpsdata",
