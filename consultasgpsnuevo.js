@@ -25,7 +25,7 @@ const pool = mysql.createPool({
 (async () => {
   try {
       const connection = await pool.getConnection();
-      console.log('Conectado a la base de datos MySQL');
+     // console.log('Conectado a la base de datos MySQL');
       connection.release();
 
       // Configuración de Redis
@@ -43,7 +43,7 @@ const pool = mysql.createPool({
       });
 
       redisClient.on('connect', () => {
-          console.log('Conectado a Redis correctamente');
+         // console.log('Conectado a Redis correctamente');
       });
 
   } catch (error) {
@@ -101,7 +101,7 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   // Modificar la consulta para extraer solo la parte de la fecha de autofecha
   const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha LIKE ?`;
 
-  console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
+  //console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
   const [results] = await connection.execute(query, [data.didempresa, `${data.fecha}%`]);
 
   // Estructurar la respuesta
@@ -175,8 +175,8 @@ app.post('/consultas', async (req, res) => {
     const fecha = new Date();
     const claveFechaRedis = `${fecha.getFullYear()}_${(fecha.getMonth() + 1).toString().padStart(2, '0')}_${fecha.getDate().toString().padStart(2, '0')}`;
 	const claveFechaDb = `gps_${fecha.getDate().toString().padStart(2, '0')}_${(fecha.getMonth() + 1).toString().padStart(2, '0')}_${fecha.getFullYear()}`;
-	console.log(claveFechaRedis);
-	console.log(claveFechaDb);
+	//console.log(claveFechaRedis);
+	//console.log(claveFechaDb);
 	
 	//await redisClient.connect();
 	
