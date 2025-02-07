@@ -11,7 +11,7 @@ app.use(express.json()); // Middleware para parsear JSON
 
 // Configuración de la base de datos
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || '149.56.182.49',
+    host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'backgos',
     password: process.env.DB_PASSWORD || 'pt25pt26pt',
     database: process.env.DB_NAME || 'gpsdata',
@@ -56,8 +56,13 @@ async function getActualData(connection, data, res, tableName){
 	const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
                  FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0 
                  ORDER BY autofecha DESC LIMIT 1`;
+                 
+                 
   const [results] = await connection.execute(query, [data.empresa, data.cadete]);
+
   res.writeHead(200, { "Content-Type": "application/json" });
+ 
+  
   res.end(JSON.stringify(results[0] || { ilat: 0, ilog: 0, bateria: 0, velocidad: 0 }));
 }
 
@@ -80,7 +85,7 @@ async function getAll(connection, data, res, tableName) {
 }
 
 async function obtenerHorasCadetesPorFecha(connection, data, res) {
-  console.log("aaa");
+//  console.log("aaa");
   
   // Obtener la fecha en formato YYYY-MM-DD
   const fecha = data.fecha; // Por ejemplo, "2025-02-05"
