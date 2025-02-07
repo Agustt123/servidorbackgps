@@ -3,11 +3,11 @@ const express = require('express');
 const mysql = require("mysql2/promise");
 const redis = require('redis');
 
-const app = express();
+//const app = express();
 const port = process.env.PORT || 13000;
 let redisClient;
 
-app.use(express.json()); // Middleware para parsear JSON
+//app.use(express.json()); // Middleware para parsear JSON
 
 // Configuración de la base de datos
 const pool = mysql.createPool({
@@ -208,12 +208,12 @@ app.post('/consultas', async (req, res) => {
 		connection.release();
 	}
 });
-app.get('/', async (req, res) => {
-  res.status(200).json({
-    estado: true,
-    mesanje: "Hola chris"
-});
-});
+//app.get('/', async (req, res) => {
+  //res.status(200).json({
+   // estado: true,
+    //mesanje: "Hola chris"
+//});
+//});
 
 // Iniciar el servidor
 app.listen(port, () => {
