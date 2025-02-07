@@ -179,7 +179,7 @@ LIMIT 100
     // Guardar en Redis después de insertar en la base de datos
     await saveToRedis(data);
   } catch (error) {
-    console.error("Error al insertar datos:", error);
+  //  console.error("Error al insertar datos:", error);
   }
 }
 
