@@ -25,7 +25,7 @@ const pool = mysql.createPool({
 (async () => {
     try {
         const connection = await pool.getConnection();
-        console.log('Conectado a la base de datos MySQL');
+      //  console.log('Conectado a la base de datos MySQL');
         connection.release();
 		
 		// Configuración de Redis
@@ -43,11 +43,11 @@ const pool = mysql.createPool({
 		});
 
 		redisClient.on('connect', () => {
-			console.log('Conectado a Redis correctamente');
+			//console.log('Conectado a Redis correctamente');
 		});
 		
     } catch (error) {
-        console.error('Error conectando a la base de datos:', error);
+        //console.error('Error conectando a la base de datos:', error);
         process.exit(1); // Salir de la aplicación si no se puede conectar
     }
 })();
@@ -90,7 +90,7 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
 
   // Verificar el nombre de la tabla
-  console.log(`Nombre de la tabla: '${claveFechadb}'`); // Asegúrate de que no haya espacios
+  //console.log(`Nombre de la tabla: '${claveFechadb}'`); // Asegúrate de que no haya espacios
 
   // Modificar la consulta para extraer solo la parte de la fecha de autofecha
   const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha LIKE ?`;
@@ -207,3 +207,4 @@ app.post('/consultas', async (req, res) => {
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });
+
