@@ -11,45 +11,45 @@ app.use(express.json()); // Middleware para parsear JSON
 
 // Configuración de la base de datos
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || '149.56.182.49',
-    user: process.env.DB_USER || 'backgos',
-    password: process.env.DB_PASSWORD || 'pt25pt26pt',
-    database: process.env.DB_NAME || 'gpsdata',
-    port: 44335,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+  host: '149.56.182.49',
+  user: 'backgos',
+  password: 'pt25pt26pt',
+  database: 'gpsdata',
+  port: 44335,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 // Verificar conexión a la base de datos
 (async () => {
-    try {
-        const connection = await pool.getConnection();
-      //  console.log('Conectado a la base de datos MySQL');
-        connection.release();
-		
-		// Configuración de Redis
-		redisClient = redis.createClient({
-		  socket: {
-			host: '192.99.190.137', // IP interna
-			port: 50301,          // Puerto interno
-		  },
-		  password: 'sdJmdxXC8luknTrqmHceJS48NTyzExQg', // Contraseña para autenticación
-		});
+  try {
+      const connection = await pool.getConnection();
+      console.log('Conectado a la base de datos MySQL');
+      connection.release();
 
-		// Manejo de errores
-		redisClient.on('error', (err) => {
-		  console.error('Error al conectar con Redis:', err);
-		});
+      // Configuración de Redis
+      const redisClient = redis.createClient({
+          socket: {
+              host: '192.99.190.137', // IP interna
+              port: 50301,            // Puerto interno
+          },
+          password: 'sdJmdxXC8luknTrqmHceJS48NTyzExQg', // Contraseña para autenticación
+      });
 
-		redisClient.on('connect', () => {
-			//console.log('Conectado a Redis correctamente');
-		});
-		
-    } catch (error) {
-        //console.error('Error conectando a la base de datos:', error);
-        process.exit(1); // Salir de la aplicación si no se puede conectar
-    }
+      // Manejo de errores de Redis
+      redisClient.on('error', (err) => {
+          console.error('Error al conectar con Redis:', err);
+      });
+
+      redisClient.on('connect', () => {
+          console.log('Conectado a Redis correctamente');
+      });
+
+  } catch (error) {
+      console.error('Error conectando a la base de datos:', error);
+      process.exit(1); // Salir de la aplicación si no se puede conectar
+  }
 })();
 
 async function getActualData(connection, data, res, tableName){
