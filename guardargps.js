@@ -95,26 +95,44 @@ async function saveToRedis(data) {
   }
 }
 
-async function insertData(connection, data) {
+async function insertData(data) {
   const { empresa, ilat, ilong, cadete, bateria, velocidad } = data;
-  if ([empresa, ilat, ilong, cadete, bateria, velocidad].includes(undefined)) {
+  if (!empresa || !ilat || !ilong || !cadete || !bateria || !velocidad) {
     console.error("Error: uno o más parámetros son undefined", data);
     return;
   }
 
-  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`;
+  let connection;
   try {
+    connection = await pool.getConnection(); // Obtener conexión del pool
+    await connection.beginTransaction(); // Iniciar transacción
+
+    // Insertar datos
+    const insertQuery = `INSERT INTO ${tableName} 
+      (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) 
+      VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`;
+    
     const [insertResult] = await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
-    if (insertResult.affectedRows > 0) {
-      const idinsertado = insertResult.insertId;
-      const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? LIMIT 100`;
-      await connection.execute(updateQuery, [empresa, cadete, idinsertado]);
-    }
-    await saveToRedis(data);
+    const idInsertado = insertResult.insertId;
+
+    // Actualizar registros antiguos
+    const updateQuery = `UPDATE ${tableName} 
+      SET superado = 1 
+      WHERE didempresa = ? AND cadete = ? AND id != ? 
+      LIMIT 100`;
+    
+    await connection.execute(updateQuery, [empresa, cadete, idInsertado]);
+
+    await connection.commit(); // Confirmar transacción
+    await saveToRedis(data); // Guardar en Redis después de la base de datos
   } catch (error) {
+    if (connection) await connection.rollback(); // Revertir si hay error
     console.error("Error al insertar datos:", error);
+  } finally {
+    if (connection) connection.release(); // Cerrar conexión
   }
 }
+
 
 async function listenToRabbitMQ() {
   const connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672');
