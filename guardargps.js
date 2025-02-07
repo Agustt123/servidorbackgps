@@ -74,7 +74,7 @@ async function createTableIfNotExists(connection) {
   //    console.log(Tabla ${tableName} ya existe.);
     } catch {
       // Si hay un error, la tabla no existe y se debe crear
-      const createTableQuery = `
+      const createTableQuery = 
       CREATE TABLE IF NOT EXISTS ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
         didempresa VARCHAR(50),
@@ -89,7 +89,7 @@ async function createTableIfNotExists(connection) {
         INDEX (cadete),
         INDEX (superado),
         INDEX (autofecha)
-      )`;
+      );
       await connection.query(createTableQuery);
       Atablas[tableName] = 1; // Agregar la tabla a Atablas
     //  console.log(Tabla ${tableName} creada.);
@@ -152,8 +152,8 @@ async function insertData(connection, data) {
     return;
   }
 
-  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) 
-                        VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`;
+  const insertQuery = INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) 
+                        VALUES (?, ?, ?, ?, ?, ?, 0, NOW());
 
   try {
     const [insertResult] = await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
@@ -163,12 +163,12 @@ async function insertData(connection, data) {
     if (insertResult.affectedRows > 0) {
       const idinsertado = insertResult.insertId; // Captura el ID del nuevo registro
 
-      const updateQuery = `
+      const updateQuery = 
       UPDATE ${tableName}
       SET superado = 1
       WHERE didempresa = ? AND cadete = ? AND id != ?
 LIMIT 100
-`
+
         ;
 
       await connection.execute(updateQuery, [empresa, cadete, idinsertado]); // Usa parámetros para evitar inyección SQL
@@ -257,3 +257,4 @@ server.listen(port, hostname, async () => {
  // console.log(Server running at http://${hostname}:${port}/);
   await listenToRabbitMQ(); // Iniciar la escucha de RabbitMQ
 });
+
