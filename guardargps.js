@@ -168,7 +168,10 @@ async function insertData(connection, data) {
       const updateQuery = `
       UPDATE ${tableName}
       SET superado = 1
-      WHERE didempresa = ? AND cadete = ? AND id != ?`;
+      WHERE didempresa = ? AND cadete = ? AND id != ?
+LIMIT 100
+`
+        ;
 
       await connection.execute(updateQuery, [empresa, cadete, idinsertado]); // Usa parámetros para evitar inyección SQL
     }
