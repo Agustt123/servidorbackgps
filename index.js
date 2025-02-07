@@ -14,7 +14,7 @@ const app = express();
 
 
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   res.status(200).json({
     estado: true,
     mesanje: "Hola chris"
