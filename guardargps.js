@@ -258,3 +258,4 @@ server.listen(port, hostname, async () => {
   await listenToRabbitMQ(); // Iniciar la escucha de RabbitMQ
 });
 
+
