@@ -1,6 +1,6 @@
 const http = require("http");
 const mysql = require("mysql2/promise");
-const amqp = require("amqplib"); // Importar amqplib
+const amqp = require("amqplib");
 const { redisClient } = require("./dbconfig");
 
 const port = 12500;
@@ -19,8 +19,8 @@ const dbConfig = {
 };
 
 const pool = mysql.createPool(dbConfig);
-
 const Atablas = {};
+const dataStore = {};
 
 const getCurrentDateString = () => {
   const currentDate = new Date();
@@ -34,21 +34,25 @@ const formatLocalDate = (date) => {
 
 const currentDate = new Date();
 currentDate.setHours(currentDate.getHours() - 3);
-
 const year = currentDate.getFullYear();
 const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
 const day = ("0" + currentDate.getDate()).slice(-2);
-
 const tableName = `gps_${day}_${month}_${year}`;
-const dataStore = {};
 
-const updateDataStore = (empresa, chofer, latitud, longitud, bateria, velocidad) => {
-  const dateKey = getCurrentDateString();
-  if (!dataStore[dateKey]) dataStore[dateKey] = {};
-  if (!dataStore[dateKey][empresa]) dataStore[dateKey][empresa] = {};
-  if (!dataStore[dateKey][empresa][chofer]) dataStore[dateKey][empresa][chofer] = [];
-  dataStore[dateKey][empresa][chofer].push({ latitud, longitud, fecha: formatLocalDate(new Date()), bateria, velocidad });
-};
+async function executeWithRetry(connection, query, params, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await connection.execute(query, params);
+    } catch (error) {
+      if (error.code === 'ER_LOCK_DEADLOCK' && i < retries - 1) {
+        console.warn(`Deadlock detectado. Reintentando ${i + 1}/${retries}...`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
 
 async function createTableIfNotExists(connection) {
   if (!Atablas[tableName]) {
@@ -79,10 +83,8 @@ async function createTableIfNotExists(connection) {
 
 async function saveToRedis(data) {
   const { empresa, cadete, ilat, ilong, bateria, velocidad } = data;
-  const dateKey = getCurrentDateString();
   const redisKey = tableName;
   const entry = { latitud: ilat, longitud: ilong, fecha: formatLocalDate(new Date()), bateria, velocidad };
-
   try {
     const existingData = await redisClient.get(redisKey);
     let dataToStore = existingData ? JSON.parse(existingData) : {};
@@ -104,11 +106,11 @@ async function insertData(connection, data) {
 
   const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`;
   try {
-    const [insertResult] = await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
+    const [insertResult] = await executeWithRetry(connection, insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
     if (insertResult.affectedRows > 0) {
-      const idinsertado = insertResult.insertId;
+      const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? LIMIT 100`;
-      await connection.execute(updateQuery, [empresa, cadete, idinsertado]);
+      await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
     }
     await saveToRedis(data);
   } catch (error) {
@@ -124,19 +126,21 @@ async function listenToRabbitMQ() {
   channel.consume(queue, async (msg) => {
     const dataEntrada = JSON.parse(msg.content.toString());
     const dbConnection = await pool.getConnection();
-    switch (dataEntrada.operador) {
-      case "guardar":
-        await createTableIfNotExists(dbConnection);
-        await insertData(dbConnection, dataEntrada);
-        updateDataStore(dataEntrada.empresa, dataEntrada.cadete, dataEntrada.ilat, dataEntrada.ilong, dataEntrada.bateria, dataEntrada.velocidad);
-        break;
-      case "xvariable":
-        console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
-        break;
-      default:
-        console.error("Operador inválido:", dataEntrada.operador);
+    try {
+      switch (dataEntrada.operador) {
+        case "guardar":
+          await createTableIfNotExists(dbConnection);
+          await insertData(dbConnection, dataEntrada);
+          break;
+        case "xvariable":
+          console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
+          break;
+        default:
+          console.error("Operador inválido:", dataEntrada.operador);
+      }
+    } finally {
+      dbConnection.release();
     }
-    dbConnection.release();
   }, { noAck: true });
 }
 
