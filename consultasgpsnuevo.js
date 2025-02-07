@@ -11,7 +11,7 @@ app.use(express.json()); // Middleware para parsear JSON
 
 // Configuración de la base de datos
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '10.70.0.67',
     user: process.env.DB_USER || 'backgos',
     password: process.env.DB_PASSWORD || 'pt25pt26pt',
     database: process.env.DB_NAME || 'gpsdata',
