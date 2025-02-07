@@ -202,6 +202,12 @@ app.post('/consultas', async (req, res) => {
 		connection.release();
 	}
 });
+app.get('/', async (req, res) => {
+  res.status(200).json({
+    estado: true,
+    mesanje: "Hola chris"
+});
+});
 
 // Iniciar el servidor
 app.listen(port, () => {
