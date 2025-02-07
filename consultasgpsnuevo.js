@@ -15,7 +15,7 @@ const pool = mysql.createPool({
   user: 'backgos',
   password: 'pt25pt26pt',
   database: 'gpsdata',
-  port: 44335,
+ 
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
