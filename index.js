@@ -1,7 +1,6 @@
 const express = require('express');
 
 
-const cors = require('cors');
 
 
 
@@ -10,11 +9,6 @@ const cors = require('cors');
 // Configuración del servidor Express
 const app = express();
 
-app.use(cors({
-  origin: '*', // Permite solo este origen
-  methods: ['GET', 'POST'], // Limitar los métodos HTTP
-  allowedHeaders: ['Content-Type'], // Permitir ciertos encabezados
-}));
 
 
 
