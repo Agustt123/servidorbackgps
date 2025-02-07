@@ -181,7 +181,7 @@ app.post('/consultas', async (req, res) => {
 	//await redisClient.connect();
 	
     try {
-		console.log(dataEntrada.operador);
+		//console.log(dataEntrada.operador);
     
 		if(dataEntrada.operador == "getActual"){		
 			await getActualData(connection, dataEntrada, res,claveFechaDb);
@@ -217,6 +217,6 @@ app.get('/', async (req, res) => {
 
 // Iniciar el servidor
 app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+    //console.log(`Servidor corriendo en http://localhost:${port}`);
 });
 
