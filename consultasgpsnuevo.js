@@ -56,6 +56,7 @@ async function getActualData(connection, data, res, tableName){
 	const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
                  FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0 
                  ORDER BY autofecha DESC LIMIT 1`;
+
                  
                  
   const [results] = await connection.execute(query, [data.empresa, data.cadete]);
