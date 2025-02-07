@@ -1,3 +1,5 @@
+
+
 const http = require("http");
 const mysql = require("mysql2/promise");
 const amqp = require("amqplib"); // Importar amqplib
@@ -74,18 +76,22 @@ async function createTableIfNotExists(connection) {
   //    console.log(`Tabla ${tableName} ya existe.`);
     } catch {
       // Si hay un error, la tabla no existe y se debe crear
-    const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS ${tableName} (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          didempresa VARCHAR(50),
-          cadete INT,
-          superado INT DEFAULT 0,
-          ilat DOUBLE,
-          ilog DOUBLE,
-          bateria DOUBLE,
-          velocidad DOUBLE,
-          autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )`;
+      const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS ${tableName} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        didempresa VARCHAR(50),
+        cadete INT,
+        superado INT DEFAULT 0,
+        ilat DOUBLE,
+        ilog DOUBLE,
+        bateria DOUBLE,
+        velocidad DOUBLE,
+        autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX (didempresa),
+        INDEX (cadete),
+        INDEX (superado),
+        INDEX (autofecha)
+      )`;
       await connection.query(createTableQuery);
       Atablas[tableName] = 1; // Agregar la tabla a Atablas
     //  console.log(`Tabla ${tableName} creada.`);
@@ -153,7 +159,7 @@ async function insertData(connection, data) {
 
   try {
     const [insertResult] = await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
-  //  console.log("Datos insertados:", { empresa, ilat, ilong, cadete, bateria, velocidad });
+   // console.log("Datos insertados:", { empresa, ilat, ilong, cadete, bateria, velocidad });
 
     // Verificar si se insertó un nuevo registro
     if (insertResult.affectedRows > 0) {
@@ -247,8 +253,7 @@ const server = http.createServer((req, res) => {
 
 // Iniciar el servidor
 server.listen(port, hostname, async () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+ // console.log(`Server running at http://${hostname}:${port}/`);
   await listenToRabbitMQ(); // Iniciar la escucha de RabbitMQ
 });
-
 
