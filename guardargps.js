@@ -71,7 +71,7 @@ async function createTableIfNotExists(connection) {
       await connection.query(`SELECT 1 FROM ${tableName} LIMIT 1`);
       // Si la consulta se ejecuta sin errores, la tabla existe
       Atablas[tableName] = 1; // Agregar la tabla a Atablas
-      console.log(`Tabla ${tableName} ya existe.`);
+  //    console.log(`Tabla ${tableName} ya existe.`);
     } catch {
       // Si hay un error, la tabla no existe y se debe crear
       const createTableQuery = `
@@ -88,10 +88,10 @@ async function createTableIfNotExists(connection) {
         )`;
       await connection.query(createTableQuery);
       Atablas[tableName] = 1; // Agregar la tabla a Atablas
-      console.log(`Tabla ${tableName} creada.`);
+    //  console.log(`Tabla ${tableName} creada.`);
     }
   } else {
-    console.log(`Tabla ${tableName} ya está registrada en Atablas.`);
+    //console.log(`Tabla ${tableName} ya está registrada en Atablas.`);
   }
 }
 
@@ -131,7 +131,7 @@ async function saveToRedis(data) {
 
     // Guardar en Redis
     await redisClient.set(redisKey, JSON.stringify(dataToStore));
-    console.log("Datos guardados en Redis:", dataToStore);
+  //  console.log("Datos guardados en Redis:", dataToStore);
   } catch (error) {
     console.error("Error al guardar en Redis:", error);
   }
@@ -153,7 +153,7 @@ async function insertData(connection, data) {
 
   try {
     const [insertResult] = await connection.execute(insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
-    console.log("Datos insertados:", { empresa, ilat, ilong, cadete, bateria, velocidad });
+  //  console.log("Datos insertados:", { empresa, ilat, ilong, cadete, bateria, velocidad });
 
     // Verificar si se insertó un nuevo registro
     if (insertResult.affectedRows > 0) {
@@ -174,7 +174,6 @@ async function insertData(connection, data) {
   }
 }
 
-
 // Función para escuchar mensajes desde RabbitMQ
 async function listenToRabbitMQ() {
   const connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672'); // Conectar a RabbitMQ
@@ -183,11 +182,11 @@ async function listenToRabbitMQ() {
 
   await channel.assertQueue(queue, { durable: true });
 
-  console.log(`Esperando mensajes en la cola: ${queue}`);
+  //console.log(`Esperando mensajes en la cola: ${queue}`);
 
   channel.consume(queue, async (msg) => {
     const dataEntrada = JSON.parse(msg.content.toString());
-    console.log("Mensaje recibido:", dataEntrada); // Log del mensaje recibido
+    //console.log("Mensaje recibido:", dataEntrada); // Log del mensaje recibido
     const dbConnection = await pool.getConnection();
 
     switch (dataEntrada.operador) {
@@ -195,11 +194,11 @@ async function listenToRabbitMQ() {
         await createTableIfNotExists(dbConnection);
         await insertData(dbConnection, dataEntrada);
         updateDataStore(dataEntrada.empresa, dataEntrada.cadete, dataEntrada.ilat, dataEntrada.ilong, dataEntrada.bateria, dataEntrada.velocidad);
-        console.log("Datos insertados desde RabbitMQ:", dataEntrada);
+      //  console.log("Datos insertados desde RabbitMQ:", dataEntrada);
         break;
 
       case "xvariable":
-        console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
+     //   console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
         break;
 
       default:
@@ -251,4 +250,5 @@ server.listen(port, hostname, async () => {
   console.log(`Server running at http://${hostname}:${port}/`);
   await listenToRabbitMQ(); // Iniciar la escucha de RabbitMQ
 });
+
 
