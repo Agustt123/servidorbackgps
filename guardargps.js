@@ -45,7 +45,7 @@ async function executeWithRetry(connection, query, params, retries = 3) {
       return await connection.execute(query, params);
     } catch (error) {
       if (error.code === 'ER_LOCK_DEADLOCK' && i < retries - 1) {
-        console.warn(`Deadlock detectado. Reintentando ${i + 1}/${retries}...`);
+      //  console.warn(`Deadlock detectado. Reintentando ${i + 1}/${retries}...`);
         await new Promise(resolve => setTimeout(resolve, 100));
       } else {
         throw error;
