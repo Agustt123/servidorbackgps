@@ -154,7 +154,7 @@ async function listenToRabbitMQ() {
     } finally {
       dbConnection.release();
     }
-  }, { noAck: false  });
+  }, { noAck: true  });
 }
 
 const server = http.createServer((req, res) => {
