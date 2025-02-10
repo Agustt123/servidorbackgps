@@ -122,7 +122,7 @@ async function listenToRabbitMQ() {
   const connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672');
   const channel = await connection.createChannel();
   
-  await channel.prefetch(6000); 
+  await channel.prefetch(8000); 
 
   
   const queue = 'gps';
@@ -154,7 +154,7 @@ async function listenToRabbitMQ() {
     } finally {
       dbConnection.release();
     }
-  }, { noAck: true  });
+  }, { noAck: false  });
 }
 
 const server = http.createServer((req, res) => {
