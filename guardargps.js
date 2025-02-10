@@ -111,8 +111,11 @@ async function insertData(connection, data) {
       const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? LIMIT 100`;
       await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
+      
     }
-    await saveToRedis(data);
+    
+  //  await saveToRedis(data);
+    //console.log("hola");
   } catch (error) {
     console.error("Error al insertar datos:", error);
   }
@@ -138,22 +141,28 @@ async function listenToRabbitMQ() {
 	const day = ("0" + currentDate.getDate()).slice(-2);
 	tableName = `gps_${day}_${month}_${year}`;
 	
-    try {
-      switch (dataEntrada.operador) {
-        case "guardar":
-          await createTableIfNotExists(dbConnection);
-          await insertData(dbConnection, dataEntrada);
-		  channel.ack(msg); 
-          break;
-        case "xvariable":
-          console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
-          break;
-        default:
-          console.error("Operador inválido:", dataEntrada.operador);
-      }
-    } finally {
-      dbConnection.release();
+  try {
+    switch (dataEntrada.operador) {
+      case "guardar":
+        await createTableIfNotExists(dbConnection);
+     //   console.log("Procesando mensaje:", dataEntrada);
+        await insertData(dbConnection, dataEntrada);
+        channel.ack(msg);
+       // console.log("Mensaje procesado correctamente, enviando ACK");
+        break;
+      case "xvariable":
+        console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
+        break;
+      default:
+        console.error("Operador inválido:", dataEntrada.operador);
     }
+  } catch (error) {
+    console.error("Error procesando mensaje:", error);
+    channel.nack(msg, false, false); // ❌ Rechaza el mensaje para evitar que se quede atascado
+  } finally {
+    dbConnection.release();
+  }
+  
   }, { noAck: false  });
 }
 
