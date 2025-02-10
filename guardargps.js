@@ -14,7 +14,7 @@ const dbConfig = {
   password: "pt25pt26pt",
   database: "gpsdata",
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 25,
   queueLimit: 0,
 };
 
@@ -34,10 +34,10 @@ const formatLocalDate = (date) => {
 
 const currentDate = new Date();
 currentDate.setHours(currentDate.getHours() - 3);
-const year = currentDate.getFullYear();
-const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-const day = ("0" + currentDate.getDate()).slice(-2);
-const tableName = `gps_${day}_${month}_${year}`;
+let year = currentDate.getFullYear();
+let month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+let day = ("0" + currentDate.getDate()).slice(-2);
+let tableName;
 
 async function executeWithRetry(connection, query, params, retries = 3) {
   for (let i = 0; i < retries; i++) {
@@ -121,16 +121,29 @@ async function insertData(connection, data) {
 async function listenToRabbitMQ() {
   const connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672');
   const channel = await connection.createChannel();
+  
+  await channel.prefetch(25); 
+
+  
   const queue = 'gps';
   await channel.assertQueue(queue, { durable: true });
+  
+  
   channel.consume(queue, async (msg) => {
     const dataEntrada = JSON.parse(msg.content.toString());
     const dbConnection = await pool.getConnection();
+	
+	const year = currentDate.getFullYear();
+	const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+	const day = ("0" + currentDate.getDate()).slice(-2);
+	tableName = `gps_${day}_${month}_${year}`;
+	
     try {
       switch (dataEntrada.operador) {
         case "guardar":
           await createTableIfNotExists(dbConnection);
           await insertData(dbConnection, dataEntrada);
+		  channel.ack(msg); 
           break;
         case "xvariable":
           console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
@@ -141,7 +154,7 @@ async function listenToRabbitMQ() {
     } finally {
       dbConnection.release();
     }
-  }, { noAck: true });
+  }, { noAck: false  });
 }
 
 const server = http.createServer((req, res) => {
