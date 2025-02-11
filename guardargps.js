@@ -122,49 +122,86 @@ async function insertData(connection, data) {
 }
 
 async function listenToRabbitMQ() {
-  const connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672');
-  const channel = await connection.createChannel();
-  
-  await channel.prefetch(4000); 
+  let connection;
+  let channel;
 
-  
-  const queue = 'gps';
-  await channel.assertQueue(queue, { durable: true });
-  
-  
-  channel.consume(queue, async (msg) => {
-    const dataEntrada = JSON.parse(msg.content.toString());
-    const dbConnection = await pool.getConnection();
-	
-	const year = currentDate.getFullYear();
-	const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-	const day = ("0" + currentDate.getDate()).slice(-2);
-	tableName = `gps_${day}_${month}_${year}`;
-	
-  try {
-    switch (dataEntrada.operador) {
-      case "guardar":
-        await createTableIfNotExists(dbConnection);
-     //   console.log("Procesando mensaje:", dataEntrada);
-        await insertData(dbConnection, dataEntrada);
-        channel.ack(msg);
-       // console.log("Mensaje procesado correctamente, enviando ACK");
-        break;
-      case "xvariable":
-        console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
-        break;
-      default:
-        console.error("Operador inválido:", dataEntrada.operador);
+  const reconnect = async () => {
+    try {
+      if (connection) await connection.close();
+      if (channel) await channel.close();
+
+      connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672');
+      channel = await connection.createChannel();
+      
+      await channel.prefetch(4000); 
+
+      const queue = 'gps';
+      await channel.assertQueue(queue, { durable: true });
+
+      channel.consume(queue, async (msg) => {
+        const dataEntrada = JSON.parse(msg.content.toString());
+        const dbConnection = await pool.getConnection();
+        
+        const year = currentDate.getFullYear();
+        const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+        const day = ("0" + currentDate.getDate()).slice(-2);
+        tableName = `gps_${day}_${month}_${year}`;
+        
+        try {
+          switch (dataEntrada.operador) {
+            case "guardar":
+              await createTableIfNotExists(dbConnection);
+              await insertData(dbConnection, dataEntrada);
+              channel.ack(msg);
+              break;
+            case "xvariable":
+              console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
+              break;
+            default:
+              console.error("Operador inválido:", dataEntrada.operador);
+          }
+        } catch (error) {
+          console.error("Error procesando mensaje:", error);
+          channel.nack(msg, false, false); // Rechaza el mensaje
+        } finally {
+          dbConnection.release();
+        }
+        
+      }, { noAck: false });
+
+      // Manejo de errores en el canal
+      channel.on('error', (err) => {
+        console.error('Error en el canal:', err);
+        setTimeout(reconnect, 5000); // Reintentar después de 5 segundos
+      });
+
+      // Manejo de cierre del canal
+      channel.on('close', () => {
+        console.error('Canal cerrado. Intentando reconectar...');
+        setTimeout(reconnect, 5000); // Reintentar después de 5 segundos
+      });
+
+      // Manejo de errores en la conexión
+      connection.on('error', (err) => {
+        console.error('Error en la conexión:', err);
+        setTimeout(reconnect, 5000); // Reintentar después de 5 segundos
+      });
+
+      // Manejo de cierre de conexión
+      connection.on('close', () => {
+        console.error('Conexión cerrada. Intentando reconectar...');
+        setTimeout(reconnect, 5000); // Reintentar después de 5 segundos
+      });
+
+    } catch (err) {
+      console.error('Error al conectar a RabbitMQ:', err);
+      setTimeout(reconnect, 5000); // Reintentar después de 5 segundos
     }
-  } catch (error) {
-    console.error("Error procesando mensaje:", error);
-    channel.nack(msg, false, false); // ❌ Rechaza el mensaje para evitar que se quede atascado
-  } finally {
-    dbConnection.release();
-  }
-  
-  }, { noAck: false  });
+  };
+
+  await reconnect();
 }
+
 
 const server = http.createServer((req, res) => {
   res.statusCode = 200;
