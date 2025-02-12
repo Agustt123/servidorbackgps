@@ -142,11 +142,19 @@ async function listenToRabbitMQ() {
         const dataEntrada = JSON.parse(msg.content.toString());
         const dbConnection = await pool.getConnection();
         
-        const year = currentDate.getFullYear();
-        const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-        const day = ("0" + currentDate.getDate()).slice(-2);
-        tableName = `gps_${day}_${month}_${year}`;
-        
+        // Función para obtener el nombre de la tabla del día actual
+        const getTableName = () => {
+          const now = new Date();
+          now.setHours(now.getHours() - 3);
+          const year = now.getFullYear();
+          const month = ("0" + (now.getMonth() + 1)).slice(-2);
+          const day = ("0" + now.getDate()).slice(-2);
+          return `gps_${day}_${month}_${year}`;
+        };
+      
+        tableName = getTableName();  // Se actualiza en cada mensaje
+      //  console.log("Procesando datos en la tabla:", tableName);
+      
         try {
           switch (dataEntrada.operador) {
             case "guardar":
@@ -166,8 +174,8 @@ async function listenToRabbitMQ() {
         } finally {
           dbConnection.release();
         }
-        
       }, { noAck: false });
+      
 
       // Manejo de errores en el canal
       channel.on('error', (err) => {
