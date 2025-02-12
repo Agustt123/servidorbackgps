@@ -162,6 +162,10 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
     const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
   const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ?`;
   const [results] = await connection.execute(query, [data.didempresa, data.cadete, `${data.fecha}%`]);
+ // const formattedAutofecha = formatFecha(row.autofecha);
+  results.forEach(row => {
+    row.autofecha = formatFecha(row.autofecha); // Se supone que formatFecha es la función que formatea la fecha
+});
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(results));
 }
@@ -224,3 +228,4 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
     //console.log(`Servidor corriendo en http://localhost:${port}`);
 });
+
