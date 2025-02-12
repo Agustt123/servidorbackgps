@@ -162,21 +162,38 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
   const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ?`;
   const [results] = await connection.execute(query, [data.didempresa, data.cadete, `${data.fecha}%`]);
-
-  // Modificar el campo autofecha en cada fila de results
+  const response = {};
+  
+  // Agrupar resultados por empresa
   results.forEach(row => {
-      row.autofecha = formatFecha(row.autofecha); // Se supone que formatFecha es la función que formatea la fecha
+    const empresaId = row.didempresa; // Suponiendo que este es el ID de la empresa
+    const choferId = row.cadete; // Suponiendo que este es el ID del chofer
+
+    // Inicializar la estructura de la empresa si no existe
+    if (!response[empresaId]) {
+      response[empresaId] = {};
+    }
+
+    if (!response[empresaId][choferId]) {
+      response[empresaId][choferId] = { coordenadas: [] }; // Inicializar coordenadas como un array
+    }
+
+    // Formatear autofecha
+    const formattedAutofecha = formatFecha(row.autofecha);
+  
+
+    // Agregar las coordenadas
+    response[empresaId][choferId].coordenadas.push({
+      autofecha: formattedAutofecha,
+      ilat: row.ilat,
+      ilog: row.ilog,
+    });
   });
 
-  // Envolver los resultados dentro de "recorrido"
-  const response = {
-      recorrido: results
-  };
-
+  // Devolver la respuesta en formato JSON
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(response));
 }
-
 // Endpoint POST para recibir un JSON con clave "operador"
 app.post('/consultas', async (req, res) => {
     const dataEntrada = req.body;
