@@ -99,10 +99,10 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   //console.log(`Nombre de la tabla: '${claveFechadb}'`); // Asegúrate de que no haya espacios
 
   // Modificar la consulta para extraer solo la parte de la fecha de autofecha
-  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha LIKE ?`;
+  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha between ? and ? `;
 
   //console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
-  const [results] = await connection.execute(query, [data.didempresa, `${data.fecha}%`]);
+  const [results] = await connection.execute(query, [data.didempresa, `${data.fecha} ${data.horaDesde}:00`,`${data.fecha} ${data.horaHasta}:00`]);
 
   // Estructurar la respuesta
   const response = {};
