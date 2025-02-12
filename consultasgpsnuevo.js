@@ -152,11 +152,16 @@ function formatFecha(isoString) {
 }
 
 
-
-
 async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
-  const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND DATE(autofecha) = ?`;
-  const [results] = await connection.execute(query, [data.didempresa, data.cadete, data.fecha]);
+
+    // Obtener la fecha en formato YYYY-MM-DD
+    const fecha = data.fecha; // Por ejemplo, "2025-02-05"
+    const [year, month, day] = fecha.split('-');
+    
+    // Generar el nombre de la tabla sin espacios
+    const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
+  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ?`;
+  const [results] = await connection.execute(query, [data.didempresa, data.cadete, `${data.fecha}%`]);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(results));
 }
@@ -219,4 +224,3 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
     //console.log(`Servidor corriendo en http://localhost:${port}`);
 });
-
