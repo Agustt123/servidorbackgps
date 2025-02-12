@@ -154,20 +154,27 @@ function formatFecha(isoString) {
 
 async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
 
-    // Obtener la fecha en formato YYYY-MM-DD
-    const fecha = data.fecha; // Por ejemplo, "2025-02-05"
-    const [year, month, day] = fecha.split('-');
-    
-    // Generar el nombre de la tabla sin espacios
-    const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
+  // Obtener la fecha en formato YYYY-MM-DD
+  const fecha = data.fecha; // Por ejemplo, "2025-02-05"
+  const [year, month, day] = fecha.split('-');
+  
+  // Generar el nombre de la tabla sin espacios
+  const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
   const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ?`;
   const [results] = await connection.execute(query, [data.didempresa, data.cadete, `${data.fecha}%`]);
- // const formattedAutofecha = formatFecha(row.autofecha);
+
+  // Modificar el campo autofecha en cada fila de results
   results.forEach(row => {
-    row.autofecha = formatFecha(row.autofecha); // Se supone que formatFecha es la función que formatea la fecha
-});
+      row.autofecha = formatFecha(row.autofecha); // Se supone que formatFecha es la función que formatea la fecha
+  });
+
+  // Envolver los resultados dentro de "recorrido"
+  const response = {
+      recorrido: results
+  };
+
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(results));
+  res.end(JSON.stringify(response));
 }
 
 // Endpoint POST para recibir un JSON con clave "operador"
@@ -228,4 +235,5 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
     //console.log(`Servidor corriendo en http://localhost:${port}`);
 });
+
 
