@@ -2,10 +2,16 @@
 const express = require('express');
 const mysql = require("mysql2/promise");
 const redis = require('redis');
+const amqp = require("amqplib")
 
+
+let connection;
+let channel;
 const app = express();
 const port = process.env.PORT || 13000;
 let redisClient;
+const rabbitMQUrl = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
+const queue = 'gps';
 
 app.use(express.json()); // Middleware para parsear JSON
 
@@ -51,7 +57,31 @@ const pool = mysql.createPool({
       process.exit(1); // Salir de la aplicación si no se puede conectar
   }
 })();
+async function initRabbitMQ() {
+  if (!connection) {
+      connection = await amqp.connect(rabbitMQUrl);
+      channel = await connection.createChannel();
+      await channel.assertQueue(queue, { durable: true });
+      console.log("✅ Conectado a RabbitMQ y canal creado");
+  }
+}
 
+// Función para enviar mensajes
+async function sendToRabbitMQ(data) {
+  try {
+      await initRabbitMQ();
+      channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { persistent: true });
+      //console.log("📡 Mensaje enviado:", data);
+  } catch (error) {
+     // console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
+  }
+}
+
+process.on("exit", async () => {
+  if (channel) await channel.close();
+  if (connection) await connection.close();
+  console.log("🔌 Conexión a RabbitMQ cerrada");
+});
 async function getActualData(connection, data, res, tableName){
 	const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
                  FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0 
@@ -221,8 +251,38 @@ app.post('/consultas', async (req, res) => {
 		} else if (dataEntrada.operador == "getHistorial"){
   
 			await getHistorial(connection, dataEntrada, res, claveFechaDb);		
-      	
-		} else if (dataEntrada.operador == "getAll"){
+      
+		} 
+    
+    
+    else if (dataEntrada.operador == "guardar") {
+      let body = "";
+  
+      req.on("data", (chunk) => {
+          body += chunk.toString();
+      });
+  
+      req.on("end", () => {
+          dataEntrada = JSON.parse(body); // Parseamos el JSON recibido
+  
+          const todayToken = `${year}${month}${day}`;
+          if (1 == 1) { // Si decides validar el token, cambia esta línea
+  
+              // Enviar directamente los datos a RabbitMQ
+              sendToRabbitMQ(dataEntrada);
+              
+              
+  
+              // Responder al cliente (opcional)
+              res.writeHead(200, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ status: "true"}));
+          }
+      });
+  }
+  
+  
+    
+    else if (dataEntrada.operador == "getAll"){
 			await getAll(connection, dataEntrada, res, claveFechaDb);
       
 		} else if (dataEntrada.operador == "cadeteFiltrado"){
@@ -252,5 +312,4 @@ app.get('/', async (req, res) => {
 app.listen(port, () => {
     //console.log(`Servidor corriendo en http://localhost:${port}`);
 });
-
 
