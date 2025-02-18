@@ -60,7 +60,7 @@ async function createTableIfNotExists(connection) {
       await connection.query(`SELECT 1 FROM ${tableName} LIMIT 1`);
       Atablas[tableName] = 1;
     } catch {
-      const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (
+        const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
         didempresa VARCHAR(50),
         cadete INT,
@@ -69,9 +69,9 @@ async function createTableIfNotExists(connection) {
         ilog DOUBLE,
         bateria DOUBLE,
         velocidad DOUBLE,
-        idDispositivo VARCHAR(50),  // Nuevo campo
-        precision DOUBLE,            // Nuevo campo
-        hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  // Nuevo campo
+        idDispositivo VARCHAR(50),  
+        precision_gps DOUBLE,            
+        hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX (didempresa),
         INDEX (cadete),
