@@ -114,7 +114,7 @@ async function insertData(connection, data) {
     if (insertResult.affectedRows > 0) {
       const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? `;
-      await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
+      //await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
       
     }
     
