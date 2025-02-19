@@ -70,7 +70,7 @@ async function createTableIfNotExists(connection) {
         bateria DOUBLE,
         velocidad DOUBLE,
         idDispositivo VARCHAR(50),  
-        presicion_gps DOUBLE,            
+        precision_gps DOUBLE,            
         hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX (didempresa),
@@ -102,19 +102,27 @@ async function saveToRedis(data) {
 }
 
 async function insertData(connection, data) {
-  const { empresa, ilat, ilong, cadete, bateria, velocidad } = data;
-  if ([empresa, ilat, ilong, cadete, bateria, velocidad].includes(undefined)) {
-    console.error("Error: uno o más parámetros son undefined", data);
-    return;
-  }
+ const {
+    empresa = "",
+    ilat = "",
+    ilong = "",
+    cadete = "",
+    bateria = "",
+    velocidad = "",
+    hora = null,
+    precision_gps = null,
+    idDispositivo = "",
+  } = data;
 
-  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())`;
+
+
+  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha,hora,precision_gps,idDispositivo) VALUES (?, ?, ?, ?, ?, ?, 0, NOW(),?,?,?)`;
   try {
-    const [insertResult] = await executeWithRetry(connection, insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad]);
+    const [insertResult] = await executeWithRetry(connection, insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad,hora,precision_gps,idDispositivo]);
     if (insertResult.affectedRows > 0) {
       const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? `;
-      //await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
+      await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
       
     }
     
