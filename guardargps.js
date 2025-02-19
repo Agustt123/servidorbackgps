@@ -70,7 +70,7 @@ async function createTableIfNotExists(connection) {
         bateria DOUBLE,
         velocidad DOUBLE,
         idDispositivo VARCHAR(50),  
-        precision_gps DOUBLE,            
+        presicion_gps DOUBLE,            
         hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX (didempresa),
