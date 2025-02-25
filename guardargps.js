@@ -131,7 +131,7 @@ async function insertData(connection, data) {
   //  await saveToRedis(data);
     //console.log("hola");
   } catch (error) {
-    console.error("Error al insertar datos:", error);
+  //  console.error("Error al insertar datos:", error);
   }
 }
 
