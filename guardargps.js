@@ -114,13 +114,14 @@ async function insertData(connection, data) {
     hora = null,
     precision_gps = null,
     idDispositivo = "",
+versionApp="",
   } = data;
 
 
 
-  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha,hora,precision_gps,idDispositivo) VALUES (?, ?, ?, ?, ?, ?, 0, NOW(),?,?,?)`;
+  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, autofecha,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0, NOW(),?,?,?,?)`;
   try {
-    const [insertResult] = await executeWithRetry(connection, insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad,hora,precision_gps,idDispositivo]);
+    const [insertResult] = await executeWithRetry(connection, insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad,hora,precision_gps,idDispositivo,versionApp]);
     if (insertResult.affectedRows > 0) {
       const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? `;
