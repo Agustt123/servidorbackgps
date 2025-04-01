@@ -108,17 +108,24 @@ async function getAll(connection, data, res, tableName) {
     const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;   
     const [results] = await connection.execute(query, [data.didempresa]);   
 
-    // Formatear la fecha antes de enviarla
-    const formattedResults = results.map(row => ({
-        ...row,
-        hora: formatDate(row.hora),
-        autofecha: formatDate(row.autofecha)
-    }));
-
-    const response = { gps: formattedResults };    
+    const response = {
+        gps: results.map(row => ({
+            ...row,
+            autofechaNg: formatDate(row.autofecha)
+        }))
+    };
 
     res.writeHead(200, { "Content-Type": "application/json" });   
     res.end(JSON.stringify(response)); 
+}
+
+// Función para formatear la fecha en "YYYY-MM-DD HH:MM:SS"
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const offset = -3 * 60; // UTC-3 para Argentina
+    date.setMinutes(date.getMinutes() + offset);
+
+    return date.toISOString().slice(0, 19).replace("T", " ");
 }
 
 // Función para formatear la fecha en "YYYY-MM-DD HH:MM:SS"
