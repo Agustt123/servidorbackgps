@@ -104,12 +104,22 @@ async function getHistorial(connection, data, res , tableName) {
   res.end(JSON.stringify(results));
 }
 
-async function getAll(connection, data, res, tableName) {
-  const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;
-  const [results] = await connection.execute(query, [data.didempresa]);
-  const response = {
-    gps: results
-  };
+async function getAll(connection, data, res, tableName) {   
+    const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;   
+    const [results] = await connection.execute(query, [data.didempresa]);   
+
+    // Formatear la fecha antes de enviarla
+    const formattedResults = results.map(row => ({
+        ...row,
+        hora: new Date(row.hora).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" }).replace(",", ""),
+        autofecha: new Date(row.autofecha).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" }).replace(",", "")
+    }));
+
+    const response = { gps: formattedResults };    
+
+    res.writeHead(200, { "Content-Type": "application/json" });   
+    res.end(JSON.stringify(response)); 
+}
 
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(response));
