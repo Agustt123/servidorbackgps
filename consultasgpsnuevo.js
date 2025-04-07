@@ -111,7 +111,7 @@ async function getAll(connection, data, res, tableName) {
     const response = {
         gps: results.map(row => ({
             ...row,
-            autofechaNg: formatDate(row.autofecha)
+            autofechaNg: formatDate(row.hora)
         }))
     };
 
