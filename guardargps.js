@@ -66,7 +66,9 @@ async function createTableIfNotExists(connection) {
         idDispositivo VARCHAR(50),  
         precision_gps DOUBLE,            
         hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
+autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
+
+
         versionApp VARCHAR(50), 
         INDEX (didempresa),
         INDEX (cadete),
