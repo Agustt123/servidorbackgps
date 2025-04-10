@@ -272,7 +272,6 @@ async function obtenerrecorridocadete(connection, data, res) {
   const desde = `${fechaFormateada} ${data.hora_desde}:00`;
   const hasta = `${fechaFormateada} ${data.hora_hasta}:00`;
 
- 
   try {
     const [results] = await connection.execute(query, [
       data.didempresa,
@@ -281,17 +280,13 @@ async function obtenerrecorridocadete(connection, data, res) {
       hasta
     ]);
 
-
-
     const response = {
-     
-         coordenadas: [] 
-      
+      coordenadas: []
     };
 
     results.forEach(row => {
       const formattedAutofecha = formatFecha(row.autofecha);
-      response[data.didempresa][data.cadete].coordenadas.push({
+      response.coordenadas.push({
         autofecha: formattedAutofecha,
         ilat: row.ilat,
         ilog: row.ilog
