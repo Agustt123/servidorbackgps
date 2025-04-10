@@ -248,6 +248,47 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(response));
 }
+async function obtenerrecorridocadete(connection, data, res) {
+  const fecha = data.fecha; // Ejemplo: "2025-02-05"
+  const [year, month, day] = fecha.split('-');
+  const claveFechadb = `gps_${day}_${month}_${year}`; // Resultado: gps_05_02_2025
+
+  // Consulta ajustada para filtrar también por el cadete
+  const query = `
+    SELECT * FROM ${claveFechadb} 
+    WHERE didempresa = ? 
+      AND cadete = ? 
+      AND autofecha BETWEEN ? AND ?
+  `;
+
+  const [results] = await connection.execute(query, [
+    data.didempresa,
+    data.cadete,
+    `${data.fecha} ${data.horaDesde}:00`,
+    `${data.fecha} ${data.horaHasta}:00`
+  ]);
+
+  // Estructurar respuesta
+  const response = {
+    [data.didempresa]: {
+      [data.cadete]: { coordenadas: [] }
+    }
+  };
+
+  results.forEach(row => {
+    const formattedAutofecha = formatFecha(row.autofecha);
+    response[data.didempresa][data.cadete].coordenadas.push({
+      autofecha: formattedAutofecha,
+      ilat: row.ilat,
+      ilog: row.ilog
+    });
+  });
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(response));
+}
+
+
 // Endpoint POST para recibir un JSON con clave "operador"
 app.post('/consultas', async (req, res) => {
     const dataEntrada = req.body;
@@ -317,6 +358,9 @@ app.post('/consultas', async (req, res) => {
 		} else if (dataEntrada.operador == "cadeteFiltradoUnico"){
 			await obtenerHorasCadetePorFecha(connection, dataEntrada, res , claveFechaDb);
 		}
+    else if(dataEntrada.operador == "recorridoCadete"){
+      await obtenerrecorridocadete(connection, dataEntrada, res);
+    }
 
     } catch (error) {
         console.error('Error obteniendo datos de Redis:', error);
