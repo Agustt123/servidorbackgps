@@ -249,7 +249,7 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 async function obtenerrecorridocadete(connection, data, res) {
-  const fecha = data.fecha; // Ejemplo: "2025-02-05"
+  const fecha = data.fecha_desde; // Ejemplo: "2025-02-05"
   const [year, month, day] = fecha.split('-');
   const claveFechadb = `gps_${day}_${month}_${year}`; // Resultado: gps_05_02_2025
 console.log("llegue");
@@ -265,8 +265,8 @@ console.log("llegue");
   const [results] = await connection.execute(query, [
     data.didempresa,
     data.cadete,
-    `${data.fecha} ${data.horaDesde}:00`,
-    `${data.fecha} ${data.horaHasta}:00`
+    `${data.fecha.desde} ${data.horaDesde}:00`,
+    `${data.fecha.desde} ${data.horaHasta}:00`
   ]);
 console.log(results);
 
