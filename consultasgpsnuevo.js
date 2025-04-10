@@ -249,7 +249,6 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 async function obtenerrecorridocadete(connection, data, res) {
-  // Validación de campos requeridos
   const camposRequeridos = ['didempresa', 'cadete', 'fecha_desde', 'hora_desde', 'hora_hasta'];
   const faltantes = camposRequeridos.filter(campo => data[campo] === undefined);
 
@@ -259,11 +258,9 @@ async function obtenerrecorridocadete(connection, data, res) {
     return;
   }
 
-  const fecha = data.fecha_desde;
-  const [day, month, year] = data.fecha_desde.split('/'); // para "10/04/2025"
+  const [day, month, year] = data.fecha_desde.split('/'); // viene como "10/04/2025"
   const claveFechadb = `gps_${day}_${month}_${year}`;
-
-  console.log("llegue");
+  const fechaFormateada = `${year}-${month}-${day}`; // --> "2025-04-10"
 
   const query = `
     SELECT * FROM ${claveFechadb} 
@@ -272,19 +269,21 @@ async function obtenerrecorridocadete(connection, data, res) {
       AND autofecha BETWEEN ? AND ?
   `;
 
-  let desde= `${data.fecha_desde} ${data.hora_desde}:00`;
-   let hasta=   `${data.fecha_desde} ${data.hora_hasta}:00`;
-   console.log("desde", desde);
-   console.log("hasta", hasta);
+  const desde = `${fechaFormateada} ${data.hora_desde}:00`;
+  const hasta = `${fechaFormateada} ${data.hora_hasta}:00`;
+
+  console.log("llegue");
+  console.log("desde", desde);
+  console.log("hasta", hasta);
   console.log("query", query);
-  console.log("data", claveFechadb);
+  console.log("tabla", claveFechadb);
 
   try {
     const [results] = await connection.execute(query, [
       data.didempresa,
       data.cadete,
-    desde,
-    hasta
+      desde,
+      hasta
     ]);
 
     console.log(results, "resultados");
@@ -313,7 +312,6 @@ async function obtenerrecorridocadete(connection, data, res) {
     res.end(JSON.stringify({ error: "Error al ejecutar la consulta SQL" }));
   }
 }
-
 
 
 // Endpoint POST para recibir un JSON con clave "operador"
