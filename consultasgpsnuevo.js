@@ -289,9 +289,9 @@ async function obtenerrecorridocadete(connection, data, res) {
     console.log(results, "resultados");
 
     const response = {
-      [data.didempresa]: {
-        [data.cadete]: { coordenadas: [] }
-      }
+     
+         coordenadas: [] 
+      
     };
 
     results.forEach(row => {
