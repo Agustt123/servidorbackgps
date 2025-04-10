@@ -249,12 +249,22 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 async function obtenerrecorridocadete(connection, data, res) {
-  const fecha = data.fecha_desde; // Ejemplo: "2025-02-05"
-  const [year, month, day] = fecha.split('-');
-  const claveFechadb = `gps_${day}_${month}_${year}`; // Resultado: gps_05_02_2025
-console.log("llegue");
+  // Validación de campos requeridos
+  const camposRequeridos = ['didempresa', 'cadete', 'fecha_desde', 'hora_desde', 'hora_hasta'];
+  const faltantes = camposRequeridos.filter(campo => data[campo] === undefined);
 
-  // Consulta ajustada para filtrar también por el cadete
+  if (faltantes.length > 0) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: `Faltan los siguientes campos: ${faltantes.join(', ')}` }));
+    return;
+  }
+
+  const fecha = data.fecha_desde;
+  const [year, month, day] = fecha.split('-');
+  const claveFechadb = `gps_${day}_${month}_${year}`;
+
+  console.log("llegue");
+
   const query = `
     SELECT * FROM ${claveFechadb} 
     WHERE didempresa = ? 
@@ -262,33 +272,41 @@ console.log("llegue");
       AND autofecha BETWEEN ? AND ?
   `;
 
-  const [results] = await connection.execute(query, [
-    data.didempresa,
-    data.cadete,
-    `${data.fecha_desde} ${data.hora_desde}:00`,
-    `${data.fecha_desde} ${data.hora_hasta}:00`
-  ]);
-console.log(results);
+  try {
+    const [results] = await connection.execute(query, [
+      data.didempresa,
+      data.cadete,
+      `${data.fecha_desde} ${data.hora_desde}:00`,
+      `${data.fecha_desde} ${data.hora_hasta}:00`
+    ]);
 
-  // Estructurar respuesta
-  const response = {
-    [data.didempresa]: {
-      [data.cadete]: { coordenadas: [] }
-    }
-  };
+    console.log(results);
 
-  results.forEach(row => {
-    const formattedAutofecha = formatFecha(row.autofecha);
-    response[data.didempresa][data.cadete].coordenadas.push({
-      autofecha: formattedAutofecha,
-      ilat: row.ilat,
-      ilog: row.ilog
+    const response = {
+      [data.didempresa]: {
+        [data.cadete]: { coordenadas: [] }
+      }
+    };
+
+    results.forEach(row => {
+      const formattedAutofecha = formatFecha(row.autofecha);
+      response[data.didempresa][data.cadete].coordenadas.push({
+        autofecha: formattedAutofecha,
+        ilat: row.ilat,
+        ilog: row.ilog
+      });
     });
-  });
 
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(response));
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(response));
+
+  } catch (error) {
+    console.error("Error ejecutando la consulta:", error);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Error al ejecutar la consulta SQL" }));
+  }
 }
+
 
 
 // Endpoint POST para recibir un JSON con clave "operador"
