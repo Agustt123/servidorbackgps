@@ -280,7 +280,7 @@ async function obtenerrecorridocadete(connection, data, res) {
       `${data.fecha_desde} ${data.hora_hasta}:00`
     ]);
 
-    console.log(results);
+    console.log(results, "resultados");
 
     const response = {
       [data.didempresa]: {
