@@ -265,8 +265,8 @@ console.log("llegue");
   const [results] = await connection.execute(query, [
     data.didempresa,
     data.cadete,
-    `${data.fecha.desde} ${data.hora_desde}:00`,
-    `${data.fecha.desde} ${data.hora_hasta}:00`
+    `${data.fecha_desde} ${data.hora_desde}:00`,
+    `${data.fecha_desde} ${data.hora_hasta}:00`
   ]);
 console.log(results);
 
