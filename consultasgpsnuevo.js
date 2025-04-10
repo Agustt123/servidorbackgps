@@ -272,12 +272,7 @@ async function obtenerrecorridocadete(connection, data, res) {
   const desde = `${fechaFormateada} ${data.hora_desde}:00`;
   const hasta = `${fechaFormateada} ${data.hora_hasta}:00`;
 
-  console.log("llegue");
-  console.log("desde", desde);
-  console.log("hasta", hasta);
-  console.log("query", query);
-  console.log("tabla", claveFechadb);
-
+ 
   try {
     const [results] = await connection.execute(query, [
       data.didempresa,
@@ -286,7 +281,7 @@ async function obtenerrecorridocadete(connection, data, res) {
       hasta
     ]);
 
-    console.log(results, "resultados");
+
 
     const response = {
      
