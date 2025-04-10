@@ -272,12 +272,19 @@ async function obtenerrecorridocadete(connection, data, res) {
       AND autofecha BETWEEN ? AND ?
   `;
 
+  let desde= `${data.fecha_desde} ${data.hora_desde}:00`;
+   let hasta=   `${data.fecha_desde} ${data.hora_hasta}:00`;
+   console.log("desde", desde);
+   console.log("hasta", hasta);
+  console.log("query", query);
+  console.log("data", claveFechadb);
+
   try {
     const [results] = await connection.execute(query, [
       data.didempresa,
       data.cadete,
-      `${data.fecha_desde} ${data.hora_desde}:00`,
-      `${data.fecha_desde} ${data.hora_hasta}:00`
+    desde,
+    hasta
     ]);
 
     console.log(results, "resultados");
