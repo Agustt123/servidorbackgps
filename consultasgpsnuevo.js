@@ -260,7 +260,7 @@ async function obtenerrecorridocadete(connection, data, res) {
   }
 
   const fecha = data.fecha_desde;
-  const [year, month, day] = fecha.split('-');
+  const [day, month, year] = data.fecha_desde.split('/'); // para "10/04/2025"
   const claveFechadb = `gps_${day}_${month}_${year}`;
 
   console.log("llegue");
