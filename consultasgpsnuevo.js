@@ -260,7 +260,7 @@ async function obtenerrecorridocadete(connection, data, res) {
 
   const [day, month, year] = data.fecha_desde.split('/'); // viene como "10/04/2025"
   const claveFechadb = `gps_${day}_${month}_${year}`;
-  const fechaFormateada = data.fecha_desde; // --> "2025-04-10"
+  const fechaFormateada = `${year}/${month}/${day}`; // --> "2025-04-10"
 
   const query = `
     SELECT * FROM ${claveFechadb} 
