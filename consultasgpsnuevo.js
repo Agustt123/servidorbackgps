@@ -290,6 +290,8 @@ async function obtenerrecorridocadete(connection, data, res) {
       const formattedAutofecha = formatFecha(row.autofecha);
       response.coordenadas.push({
         autofecha: formattedAutofecha,
+        precision_gps : row.precision_gps,
+        idDispositovo: row.idDispositivo,
         ilat: row.ilat,
         ilog: row.ilog
       });
