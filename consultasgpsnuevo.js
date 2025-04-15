@@ -397,32 +397,27 @@ app.post('/consultas', async (req, res) => {
 
 app.post("/actualizarlatlog", async (req, res) => {
   const dataEntrada = req.body;
-
   const connection = await pool.getConnection();
 
   try {
-    // Validación básica del body
     if (!dataEntrada.fecha || !dataEntrada.didempresa || !dataEntrada.cadete) {
       return res.status(400).json({ error: 'Faltan datos requeridos (fecha, didempresa o cadete)' });
     }
 
-    const [fecha] = dataEntrada.fecha.split(' ');
+    const [fecha, hora] = dataEntrada.fecha.split(' ');
     const [anio, mes, dia] = fecha.split('-');
+    const [hh, mm, ss] = hora.split(':');
     const tableName = `gps_${dia}_${mes}_${anio}`;
 
-    // Calcular fecha -10min y +10min
-    const fechaOriginal = new Date(dataEntrada.fecha);
+    // Fecha local, no UTC
+    const fechaOriginal = new Date(anio, parseInt(mes) - 1, dia, hh, mm, ss);
     const diezMinAntes = new Date(fechaOriginal.getTime() - 10 * 60 * 1000);
     const diezMinDespues = new Date(fechaOriginal.getTime() + 10 * 60 * 1000);
 
-    const desde = diezMinAntes.toISOString().slice(0, 19).replace('T', ' ');
-    const hasta = diezMinDespues.toISOString().slice(0, 19).replace('T', ' ');
+    const desde = diezMinAntes.toTimeString().slice(0, 8); // "HH:MM:SS"
+    const hasta = diezMinDespues.toTimeString().slice(0, 8);
 
-    // Chequear si la tabla existe
-    const [tablas] = await connection.query(
-      `SHOW TABLES LIKE ?`, [tableName]
-    );
-
+    const [tablas] = await connection.query(`SHOW TABLES LIKE ?`, [tableName]);
     if (tablas.length === 0) {
       return res.status(404).json({ error: `La tabla ${tableName} no existe` });
     }
@@ -433,7 +428,6 @@ app.post("/actualizarlatlog", async (req, res) => {
       WHERE cadete = ?
         AND didempresa = ?
         AND superado = 0
-    
         AND hora BETWEEN ? AND ?
     `;
 
@@ -443,14 +437,8 @@ app.post("/actualizarlatlog", async (req, res) => {
       desde,
       hasta
     ]);
-    console.log(query,"query");
-    console.log(dataEntrada.cadete,"cadete");
-    console.log(dataEntrada.didempresa,"didempresa");
-    console.log(desde,"desde");
-    console.log(hasta,"hasta");
-    console.log(result,"result");
-    
-    
+
+    console.log({ tableName, desde, hasta, result });
 
     res.status(200).json({ message: 'Consulta exitosa', result });
 
@@ -461,6 +449,7 @@ app.post("/actualizarlatlog", async (req, res) => {
     connection.release();
   }
 });
+
 
 app.get('/', async (req, res) => {
   res.status(200).json({
