@@ -397,47 +397,60 @@ app.post('/consultas', async (req, res) => {
 
 app.post("/actualizarlatlog", async (req, res) => {
   const dataEntrada = req.body;
+
   const connection = await pool.getConnection();
 
   try {
-      const [fecha] = dataEntrada.fecha.split(' ');
-      const [anio, mes, dia] = fecha.split('-');
-      const tableName = `gps_${dia}_${mes}_${anio}`;
+    // Validación básica del body
+    if (!dataEntrada.fecha || !dataEntrada.didempresa || !dataEntrada.cadete) {
+      return res.status(400).json({ error: 'Faltan datos requeridos (fecha, didempresa o cadete)' });
+    }
 
-      // Calcular fecha -10min y +10min
-      const fechaOriginal = new Date(dataEntrada.fecha);
-      const diezMinAntes = new Date(fechaOriginal.getTime() - 10 * 60 * 1000);
-      const diezMinDespues = new Date(fechaOriginal.getTime() + 10 * 60 * 1000);
+    const [fecha] = dataEntrada.fecha.split(' ');
+    const [anio, mes, dia] = fecha.split('-');
+    const tableName = `gps_${dia}_${mes}_${anio}`;
 
-      const desde = diezMinAntes.toISOString().slice(0, 19).replace('T', ' ');
-      const hasta = diezMinDespues.toISOString().slice(0, 19).replace('T', ' ');
+    // Calcular fecha -10min y +10min
+    const fechaOriginal = new Date(dataEntrada.fecha);
+    const diezMinAntes = new Date(fechaOriginal.getTime() - 10 * 60 * 1000);
+    const diezMinDespues = new Date(fechaOriginal.getTime() + 10 * 60 * 1000);
 
-      const query = `
-          SELECT ilat, ilog
-          FROM ${tableName}
-          WHERE cadete = ?
-            AND didempresa = ?
-            AND superado = 0
-            AND elim = 0
-            AND fecha BETWEEN ? AND ?
-      `;
+    const desde = diezMinAntes.toISOString().slice(0, 19).replace('T', ' ');
+    const hasta = diezMinDespues.toISOString().slice(0, 19).replace('T', ' ');
 
+    // Chequear si la tabla existe
+    const [tablas] = await connection.query(
+      `SHOW TABLES LIKE ?`, [tableName]
+    );
 
-      
+    if (tablas.length === 0) {
+      return res.status(404).json({ error: `La tabla ${tableName} no existe` });
+    }
 
-      const [result] = await connection.execute(query, [
-          dataEntrada.cadete,
-          dataEntrada.empresa,
-          desde,
-          hasta
-      ]);
+    const query = `
+      SELECT ilat, ilog
+      FROM \`${tableName}\`
+      WHERE cadete = ?
+        AND didempresa = ?
+        AND superado = 0
+        AND elim = 0
+        AND fecha BETWEEN ? AND ?
+    `;
 
-      res.status(200).json({ message: 'Consulta exitosa', result });
+    const [result] = await connection.execute(query, [
+      dataEntrada.cadete,
+      dataEntrada.didempresa,
+      desde,
+      hasta
+    ]);
+
+    res.status(200).json({ message: 'Consulta exitosa', result });
+
   } catch (error) {
-      console.error('Error al actualizar:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error al actualizar:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   } finally {
-      connection.release();
+    connection.release();
   }
 });
 
