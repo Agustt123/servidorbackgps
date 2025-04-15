@@ -443,6 +443,14 @@ app.post("/actualizarlatlog", async (req, res) => {
       desde,
       hasta
     ]);
+    console.log(query,"query");
+    console.log(dataEntrada.cadete,"cadete");
+    console.log(dataEntrada.didempresa,"didempresa");
+    console.log(desde,"desde");
+    console.log(hasta,"hasta");
+    console.log(result,"result");
+    
+    
 
     res.status(200).json({ message: 'Consulta exitosa', result });
 
