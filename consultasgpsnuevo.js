@@ -433,7 +433,7 @@ app.post("/actualizarlatlog", async (req, res) => {
       WHERE cadete = ?
         AND didempresa = ?
         AND superado = 0
-        AND elim = 0
+    
         AND hora BETWEEN ? AND ?
     `;
 
