@@ -439,7 +439,7 @@ app.post("/actualizarlatlog", async (req, res) => {
   LIMIT 1
     `;
 
-    const [result] = await connection.execute(query, [
+    const result = await connection.execute(query, [
       dataEntrada.cadete,
       dataEntrada.didempresa,
       desde,
