@@ -434,7 +434,7 @@ app.post("/actualizarlatlog", async (req, res) => {
         AND didempresa = ?
       
   
-        AND fecha BETWEEN ? AND ?
+        AND hora BETWEEN ? AND ?
     `;
 
     const [result] = await connection.execute(query, [
