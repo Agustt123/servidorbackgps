@@ -439,7 +439,7 @@ app.post("/actualizarlatlog", async (req, res) => {
   LIMIT 1
     `;
 
-    const result = await connection.execute(query, [
+    const [result] = await connection.execute(query, [
       dataEntrada.cadete,
       dataEntrada.didempresa,
       desde,
@@ -449,7 +449,7 @@ app.post("/actualizarlatlog", async (req, res) => {
 
     console.log({ tableName, desde, hasta, result });
 
-    res.status(200).json({ message: 'Consulta exitosa', result });
+    res.status(200).json({ message: 'Consulta exitosa', result: result[0] });
 
   } catch (error) {
     console.error('Error al actualizar:', error);
