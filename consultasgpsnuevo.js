@@ -435,6 +435,8 @@ app.post("/actualizarlatlog", async (req, res) => {
       
   
         AND hora BETWEEN ? AND ?
+          ORDER BY ABS(TIMESTAMPDIFF(SECOND, hora, ?)) ASC
+  LIMIT 1
     `;
 
     const [result] = await connection.execute(query, [
