@@ -409,13 +409,18 @@ app.post("/actualizarlatlog", async (req, res) => {
     const [hh, mm, ss] = hora.split(':');
     const tableName = `gps_${dia}_${mes}_${anio}`;
 
-    // Fecha local, no UTC
+    // Crear fecha local (sin UTC)
     const fechaOriginal = new Date(anio, parseInt(mes) - 1, dia, hh, mm, ss);
     const diezMinAntes = new Date(fechaOriginal.getTime() - 10 * 60 * 1000);
     const diezMinDespues = new Date(fechaOriginal.getTime() + 10 * 60 * 1000);
 
-    const desde = diezMinAntes.toTimeString().slice(0, 8); // "HH:MM:SS"
-    const hasta = diezMinDespues.toTimeString().slice(0, 8);
+    const toMySQLDateTime = (date) => {
+      const pad = (n) => n.toString().padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+
+    const desde = toMySQLDateTime(diezMinAntes);
+    const hasta = toMySQLDateTime(diezMinDespues);
 
     const [tablas] = await connection.query(`SHOW TABLES LIKE ?`, [tableName]);
     if (tablas.length === 0) {
@@ -428,7 +433,8 @@ app.post("/actualizarlatlog", async (req, res) => {
       WHERE cadete = ?
         AND didempresa = ?
         AND superado = 0
-        AND hora BETWEEN ? AND ?
+        AND elim = 0
+        AND fecha BETWEEN ? AND ?
     `;
 
     const [result] = await connection.execute(query, [
