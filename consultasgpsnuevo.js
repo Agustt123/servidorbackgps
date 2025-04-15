@@ -164,7 +164,8 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   // Agrupar resultados por empresa
   results.forEach(row => {
     const empresaId = row.didempresa; // Suponiendo que este es el ID de la empresa
-    const choferId = row.cadete; // Suponiendo que este es el ID del chofer
+    const choferId = row.cadete;
+     // Suponiendo que este es el ID del chofer
 
     // Inicializar la estructura de la empresa si no existe
     if (!response[empresaId]) {
@@ -184,6 +185,8 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
       autofecha: formattedAutofecha,
       ilat: row.ilat,
       ilog: row.ilog,
+      precision_gps: row.precision_gps,
+      idDispositovo: row.idDispositivo,
     });
   });
 
@@ -241,6 +244,8 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
       autofecha: formattedAutofecha,
       ilat: row.ilat,
       ilog: row.ilog,
+      precision_gps: row.precision_gps,
+      idDispositovo: row.idDispositivo,
     });
   });
 
@@ -388,6 +393,54 @@ app.post('/consultas', async (req, res) => {
 		connection.release();
 	}
 });
+
+
+app.post("/actualizarlatlog", async (req, res) => {
+  const dataEntrada = req.body;
+  const connection = await pool.getConnection();
+
+  try {
+      const [fecha] = dataEntrada.fecha.split(' ');
+      const [anio, mes, dia] = fecha.split('-');
+      const tableName = `gps_${dia}_${mes}_${anio}`;
+
+      // Calcular fecha -10min y +10min
+      const fechaOriginal = new Date(dataEntrada.fecha);
+      const diezMinAntes = new Date(fechaOriginal.getTime() - 10 * 60 * 1000);
+      const diezMinDespues = new Date(fechaOriginal.getTime() + 10 * 60 * 1000);
+
+      const desde = diezMinAntes.toISOString().slice(0, 19).replace('T', ' ');
+      const hasta = diezMinDespues.toISOString().slice(0, 19).replace('T', ' ');
+
+      const query = `
+          SELECT ilat, ilog
+          FROM ${tableName}
+          WHERE cadete = ?
+            AND didempresa = ?
+            AND superado = 0
+            AND elim = 0
+            AND fecha BETWEEN ? AND ?
+      `;
+
+
+      
+
+      const [result] = await connection.execute(query, [
+          dataEntrada.cadete,
+          dataEntrada.empresa,
+          desde,
+          hasta
+      ]);
+
+      res.status(200).json({ message: 'Consulta exitosa', result });
+  } catch (error) {
+      console.error('Error al actualizar:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+      connection.release();
+  }
+});
+
 app.get('/', async (req, res) => {
   res.status(200).json({
     estado: true,
