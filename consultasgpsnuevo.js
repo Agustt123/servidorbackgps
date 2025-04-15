@@ -443,7 +443,8 @@ app.post("/actualizarlatlog", async (req, res) => {
       dataEntrada.cadete,
       dataEntrada.didempresa,
       desde,
-      hasta
+      hasta,
+      dataEntrada.fecha
     ]);
 
     console.log({ tableName, desde, hasta, result });
