@@ -462,7 +462,7 @@ app.post("/actualizarlatlog", async (req, res) => {
 
 app.get('/ping', (req, res) => {
   const currentDate = new Date();
-  currentDate.setHours(currentDate.getHours() - 3); // Resta 3 horas
+  currentDate.setHours(currentDate.getHours()); // Resta 3 horas
 
   // Formatear la hora en el formato HH:MM:SS
   const hours = currentDate.getHours().toString().padStart(2, '0');
