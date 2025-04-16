@@ -462,10 +462,17 @@ app.post("/actualizarlatlog", async (req, res) => {
 
 app.get('/ping', (req, res) => {
   const currentDate = new Date();
+  currentDate.setHours(currentDate.getHours() - 3); // Resta 3 horas
+
+  // Formatear la hora en el formato HH:MM:SS
+  const hours = currentDate.getHours().toString().padStart(2, '0');
+  const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+  const seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+
   res.status(200).json({
-    estado: true,
-   
-    fecha_hora: currentDate.toISOString() // Devuelve la fecha y hora en formato ISO
+    hora: formattedTime
   });
 });
 
