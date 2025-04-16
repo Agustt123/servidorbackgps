@@ -460,12 +460,15 @@ app.post("/actualizarlatlog", async (req, res) => {
 });
 
 
-app.get('/', async (req, res) => {
+app.get('/ping', (req, res) => {
+  const currentDate = new Date();
   res.status(200).json({
     estado: true,
-    mesanje: "Hola chris"
+   
+    fecha_hora: currentDate.toISOString() // Devuelve la fecha y hora en formato ISO
+  });
 });
-});
+
 
 // Iniciar el servidor
 app.listen(port, () => {
