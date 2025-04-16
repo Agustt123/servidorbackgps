@@ -450,7 +450,7 @@ app.post("/actualizarlatlog", async (req, res) => {
 
     console.log({ tableName, desde, hasta, result });
 
-    res.status(200).json({ message: 'Consulta exitosa', result: result[0] });
+    res.status(200).json({ message: 'Consulta exitosa', result: result[0] || { ilat: 0, ilog: 0 } });
 
   } catch (error) {
     console.error('Error al actualizar:', error);
