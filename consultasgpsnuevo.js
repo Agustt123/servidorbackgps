@@ -14,7 +14,7 @@ const rabbitMQUrl = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const queue = 'gps';
 
 app.use(express.json()); // Middleware para parsear JSON
-app.use(cors());
+
 // Configuración de la base de datos
 const pool = mysql.createPool({
   host: '10.70.0.67',
