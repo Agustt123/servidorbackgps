@@ -5,6 +5,7 @@ const { redisClient } = require("./dbconfig");
 
 const port = 12500;
 const hostname = "localhost";
+const Adbcreada = {};
 
 process.env.TZ = 'UTC';
 
@@ -48,38 +49,37 @@ async function executeWithRetry(connection, query, params, retries = 3) {
   }
 }
 
-async function createTableIfNotExists(connection) {
-  if (!Atablas[tableName]) {
-    try {
-      await connection.query(`SELECT 1 FROM ${tableName} LIMIT 1`);
-      Atablas[tableName] = 1;
-    } catch {
-      const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        didempresa VARCHAR(50),
-        cadete INT,
-        superado INT DEFAULT 0,
-        ilat DOUBLE,
-        ilog DOUBLE,
-        bateria DOUBLE,
-        velocidad DOUBLE,
-        idDispositivo VARCHAR(50),  
-        precision_gps DOUBLE,            
-        hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
 
 
-        versionApp VARCHAR(50), 
-        INDEX (didempresa),
-        INDEX (cadete),
-        INDEX (superado),
-        INDEX (autofecha)
-      )`;
-      await connection.query(createTableQuery);
-      Atablas[tableName] = 1;
-    }
-  }
+async function createTableIfNotExists(connection, fechaStr) {
+  if (Adbcreada[fechaStr]) return;
+
+  const tableName = `gps_${fechaStr.replace(/-/g, "_")}`;
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS \`${tableName}\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      didempresa VARCHAR(50),
+      cadete INT,
+      superado INT DEFAULT 0,
+      ilat DOUBLE,
+      ilog DOUBLE,
+      bateria DOUBLE,
+      velocidad DOUBLE,
+      idDispositivo VARCHAR(50),  
+      precision_gps DOUBLE,            
+      hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      versionApp VARCHAR(50), 
+      INDEX (didempresa),
+      INDEX (cadete),
+      INDEX (superado),
+      INDEX (autofecha)
+    )`;
+
+  await connection.query(createTableQuery);
+  Adbcreada[fechaStr] = true;
 }
+
 
 async function insertData(connection, data) {
   const {
