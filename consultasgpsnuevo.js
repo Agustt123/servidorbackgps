@@ -459,7 +459,7 @@ app.post("/actualizarlatlog", async (req, res) => {
     connection.release();
   }
 });
-app.post('/retrovieja', async (req, res) => {
+app.post('/backgps', async (req, res) => {
   const data = {
     ...req.body,
     operador: "guardar" // 👈 lo agregás acá
