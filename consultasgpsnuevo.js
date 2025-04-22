@@ -459,7 +459,7 @@ app.post("/actualizarlatlog", async (req, res) => {
     connection.release();
   }
 });
-app.get('/retrovieja', (req, res) => {
+app.post('/retrovieja', (req, res) => {
 
   const data = req.body;
  sendToRabbitMQ(data); // Enviar los datos a RabbitMQ
