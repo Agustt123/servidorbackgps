@@ -72,7 +72,7 @@ async function sendToRabbitMQ(data) {
   try {
       await initRabbitMQ();
       channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { persistent: true });
-      //console.log("📡 Mensaje enviado:", data);
+      console.log("📡 Mensaje enviado:", data);
   } catch (error) {
      // console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
   }
@@ -459,14 +459,16 @@ app.post("/actualizarlatlog", async (req, res) => {
     connection.release();
   }
 });
-app.post('/retrovieja', (req, res) => {
-
+app.post('/retrovieja', async (req, res) => {
   const data = req.body;
- sendToRabbitMQ(data); // Enviar los datos a RabbitMQ
 
- return true
-
-
+  try {
+    await sendToRabbitMQ(data); // Esperar que se envíe
+    res.status(200).json({ ok: true, mensaje: 'Mensaje enviado a RabbitMQ' });
+  } catch (error) {
+    console.error("❌ Error al enviar mensaje:", error);
+    res.status(500).json({ ok: false, error: 'No se pudo enviar a RabbitMQ' });
+  }
 });
 
 
