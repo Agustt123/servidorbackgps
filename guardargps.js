@@ -80,7 +80,6 @@ async function createTableIfNotExists(connection, fechaStr) {
   Adbcreada[fechaStr] = true;
 }
 
-
 async function insertData(connection, data) {
   const {
     empresa = "",
