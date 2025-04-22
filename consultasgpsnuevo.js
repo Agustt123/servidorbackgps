@@ -464,6 +464,7 @@ app.post('/retrovieja', (req, res) => {
   const data = req.body;
  sendToRabbitMQ(data); // Enviar los datos a RabbitMQ
 
+ return true
 
 
 });
