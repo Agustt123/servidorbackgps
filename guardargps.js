@@ -139,7 +139,7 @@ async function listenToRabbitMQ() {
         try {
           switch (dataEntrada.operador) {
             case "guardar":
-              await createTableIfNotExists(dbConnection);
+              await createTableIfNotExists(dbConnection,tableName);
               await insertData(dbConnection, dataEntrada);
               channel.ack(msg);
               break;
