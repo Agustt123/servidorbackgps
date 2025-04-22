@@ -460,16 +460,20 @@ app.post("/actualizarlatlog", async (req, res) => {
   }
 });
 app.post('/retrovieja', async (req, res) => {
-  const data = req.body;
+  const data = {
+    ...req.body,
+    operador: "guardar" // 👈 lo agregás acá
+  };
 
   try {
-    await sendToRabbitMQ(data); // Esperar que se envíe
+    await sendToRabbitMQ(data);
     res.status(200).json({ ok: true, mensaje: 'Mensaje enviado a RabbitMQ' });
   } catch (error) {
     console.error("❌ Error al enviar mensaje:", error);
     res.status(500).json({ ok: false, error: 'No se pudo enviar a RabbitMQ' });
   }
 });
+
 
 
 app.get('/ping', (req, res) => {
