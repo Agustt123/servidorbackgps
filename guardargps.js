@@ -54,7 +54,7 @@ async function executeWithRetry(connection, query, params, retries = 3) {
 async function createTableIfNotExists(connection, fechaStr) {
   if (Adbcreada[fechaStr]) return;
 
-  const tableName = `gps_${fechaStr.replace(/-/g, "_")}`;
+  const tableName = `${fechaStr.replace(/-/g, "_")}`;
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS \`${tableName}\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
