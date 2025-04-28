@@ -104,7 +104,7 @@ async function insertData(connection, data) {
       await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
     }
   } catch (error) {
-    console.error("Error al insertar datos:", error);
+ //   console.error("Error al insertar datos:", error);
   }
 }
 
@@ -147,10 +147,10 @@ async function listenToRabbitMQ() {
               console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
               break;
             default:
-              console.error("Operador inválido:", dataEntrada.operador);
+             // console.error("Operador inválido:", dataEntrada.operador);
           }
         } catch (error) {
-          console.error("Error procesando mensaje:", error);
+        //  console.error("Error procesando mensaje:", error);
           channel.nack(msg, false, false);
         } finally {
           dbConnection.release();
