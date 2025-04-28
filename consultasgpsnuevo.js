@@ -72,7 +72,7 @@ async function sendToRabbitMQ(data) {
   try {
       await initRabbitMQ();
       channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), { persistent: true });
-      console.log("📡 Mensaje enviado:", data);
+//      console.log("📡 Mensaje enviado:", data);
   } catch (error) {
      // console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
   }
@@ -106,6 +106,9 @@ async function getHistorial(connection, data, res , tableName) {
 }
 
 async function getAll(connection, data, res, tableName) {   
+
+
+  
     const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;   
     const [results] = await connection.execute(query, [data.didempresa]);   
 
@@ -462,9 +465,9 @@ app.post("/actualizarlatlog", async (req, res) => {
 app.post('/backgps', async (req, res) => {
   const data = {
     ...req.body,
-    operador: "guardar" // 👈 lo agregás acá
+    operador: "guardar" 
   };
-  console.log(data);
+  console.log(data,"data del viejo ");
   
 
   try {
