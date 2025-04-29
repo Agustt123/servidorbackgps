@@ -2,6 +2,7 @@ const http = require("http");
 const mysql = require("mysql2/promise");
 const amqp = require("amqplib");
 const { redisClient } = require("./dbconfig");
+const { log } = require("console");
 
 const port = 12500;
 const hostname = "localhost";
@@ -95,6 +96,7 @@ async function insertData(connection, data) {
   } = data;
 
 
+console.log(ilat , ilong, "dsadsadsaddsadsdad")
 
   if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
     console.log("No se insertará el registro porque ilat e ilog son 0.");
