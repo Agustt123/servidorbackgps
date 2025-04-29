@@ -85,7 +85,7 @@ process.on("exit", async () => {
 });
 async function getActualData(connection, data, res, tableName){
 	const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
-                 FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0  AND ilong != 0 and ilat != 0
+                 FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0 
                  ORDER BY autofecha DESC LIMIT 1`;
 
                  
@@ -99,7 +99,7 @@ async function getActualData(connection, data, res, tableName){
 }
 
 async function getHistorial(connection, data, res , tableName) {
-  const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND cadete = ? and ilong != 0 and ilat != 0`; ;
+  const query = `SELECT * FROM ${tableName} WHERE didempresa = ? AND cadete = ?`;
   const [results] = await connection.execute(query, [data.empresa, data.cadete]);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(results));
@@ -109,7 +109,7 @@ async function getAll(connection, data, res, tableName) {
 
 
   
-    const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ? AND ilong != 0 and ilat != 0`;   
+    const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;   
     const [results] = await connection.execute(query, [data.didempresa]);   
 
     const response = {
@@ -157,7 +157,7 @@ async function obtenerHorasCadetesPorFecha(connection, data, res) {
   //console.log(`Nombre de la tabla: '${claveFechadb}'`); // Asegúrate de que no haya espacios
 
   // Modificar la consulta para extraer solo la parte de la fecha de autofecha
-  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha between ? and ? AND ilong != 0 and ilat != 0`;
+  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND autofecha between ? and ? `;
 
   //console.log(query); // Asegúrate de que se imprima correctamente el nombre de la tabla
   const [results] = await connection.execute(query, [data.didempresa, `${data.fecha} ${data.horaDesde}:00`,`${data.fecha} ${data.horaHasta}:00`]);
@@ -221,7 +221,7 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   
   // Generar el nombre de la tabla sin espacios
   const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
-  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ? AND ilong != 0 and ilat != 0`;
+  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ?`;
   const [results] = await connection.execute(query, [data.didempresa, data.cadete, `${data.fecha}%`]);
   const response = {};
   
@@ -277,7 +277,7 @@ async function obtenerrecorridocadete(connection, data, res) {
     SELECT * FROM ${claveFechadb} 
     WHERE didempresa = ? 
       AND cadete = ? 
-      AND autofecha BETWEEN ? AND ? AND ilong != 0 and ilat != 0
+      AND autofecha BETWEEN ? AND ?
   `;
 
   const desde = `${fechaFormateada} ${data.hora_desde}:00`;
