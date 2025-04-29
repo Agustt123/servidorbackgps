@@ -93,10 +93,10 @@ async function insertData(connection, data) {
     idDispositivo = "",
     versionApp = "",
   } = data;
-console.log(data,"dsadasdsadasd");
 
 
-  if (ilat === 0 && ilong === 0 ) {
+
+  if (data.ilat === 0 && data.ilong === 0 ) {
     console.log("No se insertará el registro porque ilat e ilog son 0.");
     return; // Salir de la función sin insertar
   }
