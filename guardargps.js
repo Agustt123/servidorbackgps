@@ -94,6 +94,10 @@ async function insertData(connection, data) {
     versionApp = "",
   } = data;
 
+  if (ilat === 0 && ilong === 0) {
+    console.log("No se insertará el registro porque ilat e ilog son 0.");
+    return; // Salir de la función sin insertar
+  }
   const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0,?,?,?,?)`;
 
   try {
