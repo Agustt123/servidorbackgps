@@ -96,7 +96,7 @@ async function insertData(connection, data) {
 
 
 
-  if (data.ilat === 0 && data.ilong === 0 ) {
+  if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null)  {
     console.log("No se insertará el registro porque ilat e ilog son 0.");
     return; // Salir de la función sin insertar
   }
