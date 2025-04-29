@@ -94,9 +94,12 @@ async function insertData(connection, data) {
     idDispositivo = "",
     versionApp = "",
   } = data;
+if(empresa ==97){
 
 
-console.log(ilat , ilong, "dsadsadsaddsadsdad")
+  
+  console.log(ilat , ilong, "dsadsadsaddsadsdad")
+}
 
   if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
     console.log("No se insertará el registro porque ilat e ilog son 0.");
