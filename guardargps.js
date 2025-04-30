@@ -85,7 +85,7 @@ async function insertData(connection, data) {
   
   
   if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
-    console.log(data,"dataaaaaa");
+   // console.log(data,"dataaaaaa");
     
     return; // Salir de la función sin insertar
   }
