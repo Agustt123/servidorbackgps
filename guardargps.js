@@ -82,6 +82,13 @@ async function createTableIfNotExists(connection, fechaStr) {
 }
 
 async function insertData(connection, data) {
+  
+  
+  if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
+    console.log(data,"dataaaaaa");
+    
+    return; // Salir de la función sin insertar
+  }
   const {
     empresa = "",
     ilat = "",
@@ -94,13 +101,6 @@ async function insertData(connection, data) {
     idDispositivo = "",
     versionApp = "",
   } = data;
-
-
-  if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
-console.log(data,"dataaaaaa");
-
-    return; // Salir de la función sin insertar
-  }
   const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0,?,?,?,?)`;
 
   try {
