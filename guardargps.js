@@ -8,7 +8,7 @@ const port = 12500;
 const hostname = "localhost";
 const Adbcreada = {};
 
-process.env.TZ = 'UTC';
+process.env.TZ = "UTC";
 
 const dbConfig = {
   host: "localhost",
@@ -26,7 +26,10 @@ const dataStore = {};
 
 const getCurrentDateString = () => {
   const currentDate = new Date();
-  return `${currentDate.getFullYear()}${("0" + (currentDate.getMonth() + 1)).slice(-2)}${("0" + currentDate.getDate()).slice(-2)}`;
+  return `${currentDate.getFullYear()}${(
+    "0" +
+    (currentDate.getMonth() + 1)
+  ).slice(-2)}${("0" + currentDate.getDate()).slice(-2)}`;
 };
 
 const formatLocalDate = (date) => {
@@ -41,16 +44,14 @@ async function executeWithRetry(connection, query, params, retries = 3) {
     try {
       return await connection.execute(query, params);
     } catch (error) {
-      if (error.code === 'ER_LOCK_DEADLOCK' && i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (error.code === "ER_LOCK_DEADLOCK" && i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       } else {
         throw error;
       }
     }
   }
 }
-
-
 
 async function createTableIfNotExists(connection, fechaStr) {
   if (Adbcreada[fechaStr]) return;
@@ -82,13 +83,11 @@ async function createTableIfNotExists(connection, fechaStr) {
 }
 
 async function insertData(connection, data) {
-  
-  
-  if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
-   // console.log(data,"dataaaaaa");
-    
-    return; // Salir de la función sin insertar
-  }
+  //if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
+  // console.log(data,"dataaaaaa");
+
+  //  return; // Salir de la función sin insertar
+  //}
   const {
     empresa = "",
     ilat = "",
@@ -104,14 +103,29 @@ async function insertData(connection, data) {
   const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0,?,?,?,?)`;
 
   try {
-    const [insertResult] = await executeWithRetry(connection, insertQuery, [empresa, ilat, ilong, cadete, bateria, velocidad, hora, precision, idDispositivo, versionApp]);
+    const [insertResult] = await executeWithRetry(connection, insertQuery, [
+      empresa,
+      ilat,
+      ilong,
+      cadete,
+      bateria,
+      velocidad,
+      hora,
+      precision,
+      idDispositivo,
+      versionApp,
+    ]);
     if (insertResult.affectedRows > 0) {
       const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? `;
-      await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
+      await executeWithRetry(connection, updateQuery, [
+        empresa,
+        cadete,
+        idInsertado,
+      ]);
     }
   } catch (error) {
- //   console.error("Error al insertar datos:", error);
+    //   console.error("Error al insertar datos:", error);
   }
 }
 
@@ -121,48 +135,57 @@ async function listenToRabbitMQ() {
 
   const connectAndConsume = async () => {
     try {
-      connection = await amqp.connect('amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672');
+      connection = await amqp.connect(
+        "amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672"
+      );
       channel = await connection.createChannel();
       await channel.prefetch(4000);
 
-      const queue = 'gps';
+      const queue = "gps";
       await channel.assertQueue(queue, { durable: true });
 
-      channel.consume(queue, async (msg) => {
-        const dataEntrada = JSON.parse(msg.content.toString());
-        const dbConnection = await pool.getConnection();
+      channel.consume(
+        queue,
+        async (msg) => {
+          const dataEntrada = JSON.parse(msg.content.toString());
+          const dbConnection = await pool.getConnection();
 
-        const getTableName = () => {
-          const now = new Date();
-          now.setHours(now.getHours() - 3);
-          const year = now.getFullYear();
-          const month = ("0" + (now.getMonth() + 1)).slice(-2);
-          const day = ("0" + now.getDate()).slice(-2);
-          return `gps_${day}_${month}_${year}`;
-        };
+          const getTableName = () => {
+            const now = new Date();
+            now.setHours(now.getHours() - 3);
+            const year = now.getFullYear();
+            const month = ("0" + (now.getMonth() + 1)).slice(-2);
+            const day = ("0" + now.getDate()).slice(-2);
+            return `gps_${day}_${month}_${year}`;
+          };
 
-        tableName = getTableName();
+          tableName = getTableName();
 
-        try {
-          switch (dataEntrada.operador) {
-            case "guardar":
-              await createTableIfNotExists(dbConnection,tableName);
-              await insertData(dbConnection, dataEntrada);
-              channel.ack(msg);
-              break;
-            case "xvariable":
-              console.log("Datos en dataStore:", JSON.stringify(dataStore, null, 2));
-              break;
-            default:
-             // console.error("Operador inválido:", dataEntrada.operador);
+          try {
+            switch (dataEntrada.operador) {
+              case "guardar":
+                await createTableIfNotExists(dbConnection, tableName);
+                await insertData(dbConnection, dataEntrada);
+                channel.ack(msg);
+                break;
+              case "xvariable":
+                console.log(
+                  "Datos en dataStore:",
+                  JSON.stringify(dataStore, null, 2)
+                );
+                break;
+              default:
+              // console.error("Operador inválido:", dataEntrada.operador);
+            }
+          } catch (error) {
+            //  console.error("Error procesando mensaje:", error);
+            channel.nack(msg, false, false);
+          } finally {
+            dbConnection.release();
           }
-        } catch (error) {
-        //  console.error("Error procesando mensaje:", error);
-          channel.nack(msg, false, false);
-        } finally {
-          dbConnection.release();
-        }
-      }, { noAck: false });
+        },
+        { noAck: false }
+      );
 
       connection.on("error", (err) => {
         console.error("Error en la conexión:", err);
@@ -204,8 +227,8 @@ async function listenToRabbitMQ() {
 
 const server = http.createServer((req, res) => {
   res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Servidor en funcionamiento\n');
+  res.setHeader("Content-Type", "text/plain");
+  res.end("Servidor en funcionamiento\n");
 });
 
 server.listen(port, hostname, async () => {
