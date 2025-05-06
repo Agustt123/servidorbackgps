@@ -85,19 +85,35 @@ process.on("exit", async () => {
 });
 async function getActualData(connection, data, res, tableName) {
   const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
-                 FROM ${tableName} WHERE didempresa = ? AND cadete = ? AND superado = 0  AND ilat != 0 AND ilog != 0
-                 ORDER BY autofecha DESC LIMIT 1`;
+                 FROM ${tableName} 
+                 WHERE didempresa = ? 
+                   AND cadete = ? 
+                   AND superado = 0  
+                   AND ilat IS NOT NULL AND ilog IS NOT NULL
+                   AND ilat != 0 AND ilog != 0
+                   AND ilat != '' AND ilog != ''
+                 ORDER BY autofecha DESC 
+                 LIMIT 5`;
 
   const [results] = await connection.execute(query, [
     data.empresa,
     data.cadete,
   ]);
 
-  res.writeHead(200, { "Content-Type": "application/json" });
-
-  res.end(
-    JSON.stringify(results[0] || { ilat: 0, ilog: 0, bateria: 0, velocidad: 0 })
+  const validResult = results.find(
+    (r) =>
+      r.ilat !== null &&
+      r.ilog !== null &&
+      r.ilat !== 0 &&
+      r.ilog !== 0 &&
+      r.ilat !== "" &&
+      r.ilog !== "" &&
+      typeof r.ilat !== "undefined" &&
+      typeof r.ilog !== "undefined"
   );
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(validResult ? [validResult] : []));
 }
 
 async function getHistorial(connection, data, res, tableName) {
