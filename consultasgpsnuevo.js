@@ -127,7 +127,7 @@ async function getHistorial(connection, data, res, tableName) {
 }
 
 async function getAll(connection, data, res, tableName) {
-  const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ?`;
+  const query = `SELECT * FROM ${tableName} WHERE superado = 0 AND didempresa = ? AND ilat != 0 AND ilog != 0 AND ilat != '' AND ilog != '' AND ilat IS NOT NULL AND ilog IS NOT NULL`;
   const [results] = await connection.execute(query, [data.didempresa]);
 
   const response = {
