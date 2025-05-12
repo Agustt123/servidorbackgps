@@ -143,7 +143,8 @@ async function listenToRabbitMQ() {
 
   const connectAndConsume = async () => {
     try {
-      connection = await amqp.connect("amqp://guest:guest@192.168.1.97:5672");
+      // connection = await amqp.connect("amqp://guest:guest@192.168.1.97:5672");
+      connection = await amqp.connect("amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672");
       channel = await connection.createChannel();
       await channel.prefetch(100); // más razonable que 4000
       await channel.assertQueue("gps", { durable: true });
