@@ -155,7 +155,6 @@ async function listenToRabbitMQ() {
       channel.consume("gps", async (msg) => {
         if (!msg) return;
         const content = msg.content.toString();
-        console.log("Mensaje recibido:", content);
 
         const dataEntrada = JSON.parse(content);
         const dbConnection = await pool.getConnection();
