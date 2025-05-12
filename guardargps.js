@@ -83,7 +83,7 @@ async function insertData(connection, data) {
   const {
     empresa = "",
     ilat = "",
-    ilog = "",
+    ilong = "",
     cadete = "",
     bateria = "",
     velocidad = "",
@@ -93,9 +93,7 @@ async function insertData(connection, data) {
     versionApp = "",
   } = data;
 
-  const insertQuery = `INSERT INTO ${tableName}
-    (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, hora, precision_gps, idDispositivo, versionApp)
-    VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`;
+  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0,?,?,?,?)`;
 
   const [result] = await executeWithRetry(connection, insertQuery, [
     empresa, ilat, ilog, cadete, bateria, velocidad, hora, precision, idDispositivo, versionApp
