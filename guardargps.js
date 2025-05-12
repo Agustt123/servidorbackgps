@@ -1,8 +1,6 @@
 const http = require("http");
 const mysql = require("mysql2/promise");
 const amqp = require("amqplib");
-const { redisClient } = require("./dbconfig");
-const { log } = require("console");
 
 const port = 12500;
 const hostname = "localhost";
@@ -11,6 +9,10 @@ const Adbcreada = {};
 process.env.TZ = "UTC";
 
 const dbConfig = {
+  // host: "149.56.182.49",
+  // port: 44335,
+  // user: "root",
+  // password: "pJ3AjsA3d8Qw3A",
   host: "localhost",
   user: "backgos",
   password: "pt25pt26pt",
@@ -21,31 +23,26 @@ const dbConfig = {
 };
 
 const pool = mysql.createPool(dbConfig);
-const Atablas = {};
-const dataStore = {};
-
-const getCurrentDateString = () => {
-  const currentDate = new Date();
-  return `${currentDate.getFullYear()}${(
-    "0" +
-    (currentDate.getMonth() + 1)
-  ).slice(-2)}${("0" + currentDate.getDate()).slice(-2)}`;
-};
-
-const formatLocalDate = (date) => {
-  date.setHours(date.getHours() - 3);
-  return date.toISOString().replace("T", " ").substring(0, 19);
-};
-
 let tableName;
 
+// Formatea la fecha local para el nombre de la tabla
+const getTableName = () => {
+  const now = new Date();
+  now.setHours(now.getHours() - 3);
+  const year = now.getFullYear();
+  const month = ("0" + (now.getMonth() + 1)).slice(-2);
+  const day = ("0" + now.getDate()).slice(-2);
+  return `gps_${day}_${month}_${year}`;
+};
+
+// Reintentos en caso de deadlock
 async function executeWithRetry(connection, query, params, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       return await connection.execute(query, params);
     } catch (error) {
       if (error.code === "ER_LOCK_DEADLOCK" && i < retries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((r) => setTimeout(r, 100));
       } else {
         throw error;
       }
@@ -53,12 +50,12 @@ async function executeWithRetry(connection, query, params, retries = 3) {
   }
 }
 
+// Crea la tabla si no existe
 async function createTableIfNotExists(connection, fechaStr) {
   if (Adbcreada[fechaStr]) return;
-
-  const tableName = `${fechaStr.replace(/-/g, "_")}`;
+  const tbl = fechaStr.replace(/-/g, "_");
   const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS \`${tableName}\` (
+    CREATE TABLE IF NOT EXISTS \`${tbl}\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
       didempresa VARCHAR(50),
       cadete INT,
@@ -67,31 +64,26 @@ async function createTableIfNotExists(connection, fechaStr) {
       ilog DOUBLE,
       bateria DOUBLE,
       velocidad DOUBLE,
-      idDispositivo VARCHAR(50),  
-      precision_gps DOUBLE,            
+      idDispositivo VARCHAR(50),
+      precision_gps DOUBLE,
       hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       autofecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      versionApp VARCHAR(50), 
+      versionApp VARCHAR(50),
       INDEX (didempresa),
       INDEX (cadete),
       INDEX (superado),
       INDEX (autofecha)
     )`;
-
   await connection.query(createTableQuery);
   Adbcreada[fechaStr] = true;
 }
 
+// Inserta datos y marca anteriores como superado
 async function insertData(connection, data) {
-  //if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
-  // console.log(data,"dataaaaaa");
-
-  //  return; // Salir de la función sin insertar
-  //}
   const {
     empresa = "",
     ilat = "",
-    ilong = "",
+    ilog = "",
     cadete = "",
     bateria = "",
     velocidad = "",
@@ -100,137 +92,131 @@ async function insertData(connection, data) {
     idDispositivo = "",
     versionApp = "",
   } = data;
-  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0,?,?,?,?)`;
 
-  try {
-    const [insertResult] = await executeWithRetry(connection, insertQuery, [
-      empresa,
-      ilat,
-      ilong,
-      cadete,
-      bateria,
-      velocidad,
-      hora,
-      precision,
-      idDispositivo,
-      versionApp,
-    ]);
-    if (insertResult.affectedRows > 0) {
-      const idInsertado = insertResult.insertId;
-      const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? `;
-      await executeWithRetry(connection, updateQuery, [
-        empresa,
-        cadete,
-        idInsertado,
-      ]);
-    }
-  } catch (error) {
-    //   console.error("Error al insertar datos:", error);
+  const insertQuery = `INSERT INTO ${tableName}
+    (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, hora, precision_gps, idDispositivo, versionApp)
+    VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`;
+
+  const [result] = await executeWithRetry(connection, insertQuery, [
+    empresa, ilat, ilog, cadete, bateria, velocidad, hora, precision, idDispositivo, versionApp
+  ]);
+
+  if (result.affectedRows > 0) {
+    const idInsertado = result.insertId;
+    const updateQuery = `
+      UPDATE ${tableName}
+      SET superado = 1
+      WHERE didempresa = ? AND cadete = ? AND id != ?`;
+    await executeWithRetry(connection, updateQuery, [empresa, cadete, idInsertado]);
   }
 }
+
+// --------------------------------------------------
+//             RABBITMQ: escucha y reconexión
+// --------------------------------------------------
+
+let isReconnecting = false;
 
 async function listenToRabbitMQ() {
   let connection;
   let channel;
+  let reconnectTimer = null;
+
+  const setupErrorHandlers = (conn, ch) => {
+    conn.once("error", (err) => {
+      console.error("Error en la conexión:", err);
+      scheduleReconnect();
+    });
+    conn.once("close", () => {
+      console.error("Conexión cerrada. Reconectando...");
+      scheduleReconnect();
+    });
+    ch.once("error", (err) => {
+      console.error("Error en el canal:", err);
+      scheduleReconnect();
+    });
+    ch.once("close", () => {
+      console.error("Canal cerrado. Reconectando...");
+      scheduleReconnect();
+    });
+  };
 
   const connectAndConsume = async () => {
     try {
-      connection = await amqp.connect(
-        "amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672"
-      );
+      connection = await amqp.connect("amqp://guest:guest@192.168.1.97:5672");
       channel = await connection.createChannel();
-      await channel.prefetch(4000);
+      await channel.prefetch(100); // más razonable que 4000
+      await channel.assertQueue("gps", { durable: true });
 
-      const queue = "gps";
-      await channel.assertQueue(queue, { durable: true });
+      setupErrorHandlers(connection, channel);
 
-      channel.consume(
-        queue,
-        async (msg) => {
-          const dataEntrada = JSON.parse(msg.content.toString());
-          const dbConnection = await pool.getConnection();
+      console.log("Esperando mensajes en la cola 'gps'...");
+      channel.consume("gps", async (msg) => {
+        if (!msg) return;
+        const content = msg.content.toString();
+        console.log("Mensaje recibido:", content);
 
-          const getTableName = () => {
-            const now = new Date();
-            now.setHours(now.getHours() - 3);
-            const year = now.getFullYear();
-            const month = ("0" + (now.getMonth() + 1)).slice(-2);
-            const day = ("0" + now.getDate()).slice(-2);
-            return `gps_${day}_${month}_${year}`;
-          };
+        const dataEntrada = JSON.parse(content);
+        const dbConnection = await pool.getConnection();
+        tableName = getTableName();
 
-          tableName = getTableName();
-
-          try {
-            switch (dataEntrada.operador) {
-              case "guardar":
-                await createTableIfNotExists(dbConnection, tableName);
-                await insertData(dbConnection, dataEntrada);
-                channel.ack(msg);
-                break;
-              case "xvariable":
-                console.log(
-                  "Datos en dataStore:",
-                  JSON.stringify(dataStore, null, 2)
-                );
-                break;
-              default:
-              // console.error("Operador inválido:", dataEntrada.operador);
-            }
-          } catch (error) {
-            //  console.error("Error procesando mensaje:", error);
-            channel.nack(msg, false, false);
-          } finally {
-            dbConnection.release();
+        try {
+          switch (dataEntrada.operador) {
+            case "guardar":
+              await createTableIfNotExists(dbConnection, tableName);
+              await insertData(dbConnection, dataEntrada);
+              channel.ack(msg);
+              break;
+            case "xvariable":
+              console.log("dataStore:", JSON.stringify(dataStore, null, 2));
+              channel.ack(msg);
+              break;
+            default:
+              channel.nack(msg, false, false);
           }
-        },
-        { noAck: false }
-      );
+        } catch (err) {
+          console.error("Error procesando mensaje:", err);
+          channel.nack(msg, false, false);
+        } finally {
+          dbConnection.release();
+        }
+      }, { noAck: false });
 
-      connection.on("error", (err) => {
-        console.error("Error en la conexión:", err);
-        reconnect();
-      });
-
-      connection.on("close", () => {
-        console.error("Conexión cerrada. Reconectando...");
-        reconnect();
-      });
-
-      channel.on("error", (err) => {
-        console.error("Error en el canal:", err);
-        reconnect();
-      });
-
-      channel.on("close", () => {
-        console.error("Canal cerrado. Reconectando...");
-        reconnect();
-      });
+      // Si llegamos aquí, la conexión fue exitosa
+      isReconnecting = false;
     } catch (err) {
       console.error("Error al conectar a RabbitMQ:", err);
-      setTimeout(reconnect, 5000);
+      scheduleReconnect();
     }
   };
 
-  const reconnect = async () => {
-    try {
-      if (channel) await channel.close().catch(() => {});
-      if (connection) await connection.close().catch(() => {});
-    } catch (err) {
-      console.error("Error cerrando recursos: ", err);
-    }
-    setTimeout(connectAndConsume, 5000);
+  const scheduleReconnect = () => {
+    if (isReconnecting) return;
+    isReconnecting = true;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(async () => {
+      try {
+        if (channel) await channel.close().catch(() => { });
+        if (connection) await connection.close().catch(() => { });
+      } catch (_) { }
+      await connectAndConsume();
+    }, 5000);
   };
 
+  // Arrancamos la primera conexión
   await connectAndConsume();
 }
 
+// --------------------------------------------------
+//             SERVIDOR HTTP
+// --------------------------------------------------
+
 const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "text/plain");
+  res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("Servidor en funcionamiento\n");
 });
 
 server.listen(port, hostname, async () => {
+  console.log(`HTTP server escuchando en http://${hostname}:${port}/`);
   await listenToRabbitMQ();
 });
