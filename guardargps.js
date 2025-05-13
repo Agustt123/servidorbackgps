@@ -132,7 +132,6 @@ async function insertData(connection, data) {
 async function listenToRabbitMQ() {
   let connection;
   let channel;
-  let connection2;
 
   const connectAndConsume = async () => {
     try {
@@ -144,10 +143,6 @@ async function listenToRabbitMQ() {
 
       const queue = "gps";
       await channel.assertQueue(queue, { durable: true });
-
-      connection2 = await amqp.connect("amqp://guest:guest@192.168.1.97:5672");
-      const channel2 = await connection2.createChannel();
-      await channel2.assertQueue("gps", { durable: true });
 
       channel.consume(
         queue,
@@ -171,9 +166,6 @@ async function listenToRabbitMQ() {
               case "guardar":
                 await createTableIfNotExists(dbConnection, tableName);
                 await insertData(dbConnection, dataEntrada);
-                channel2.sendToQueue("gps", Buffer.from(content), {
-                  persistent: true,
-                });
                 channel.ack(msg);
                 break;
               case "xvariable":
