@@ -61,7 +61,7 @@ async function initRabbitMQ() {
     connection = await amqp.connect(rabbitMQUrl);
     channel = await connection.createChannel();
     await channel.assertQueue(queue, { durable: true });
-    console.log("✅ Conectado a RabbitMQ y canal creado");
+    // console.log("✅ Conectado a RabbitMQ y canal creado");
   }
 }
 
