@@ -141,7 +141,10 @@ async function insertData(connection, data) {
         const recorridoData = {
           latitud: ilat,
           longitud: ilong,
-          fecha: formatLocalDate(new Date()), // Formatear la fecha
+          precision_gps: precision,
+          idDispositovo: idDispositivo,
+
+          fecha: hora, // Formatear la fecha
         };
 
         // Obtener el valor actual de la clave
