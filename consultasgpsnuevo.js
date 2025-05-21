@@ -4,12 +4,13 @@ const mysql = require("mysql2/promise");
 const redis = require("redis");
 const amqp = require("amqplib");
 const cors = require("cors");
+const { redisClient } = require("./dbconfig");
 
 let connection;
 let channel;
 const app = express();
 const port = process.env.PORT || 13000;
-let redisClient;
+
 const rabbitMQUrl = "amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672";
 const queue = "gps";
 
