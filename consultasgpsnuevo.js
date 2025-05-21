@@ -299,10 +299,67 @@ async function obtenerrecorridocadete(connection, data, res) {
     return;
   }
 
-  const [day, month, year] = data.fecha_desde.split("/"); // viene como "10/04/2025"
+  const [day, month, year] = data.fecha_desde.split("/"); // "10/04/2025"
+  const fechaKey = `${year}${month}${day}`; // "20250521"
+  const redisKey = data.didempresa; // La empresa a consultar
+  const cadete = data.cadete;
+
+  // Si la empresa es 164, primero consulta Redis
+  if (data.didempresa === "164") {
+    try {
+      const existingData = await redisClient.get("BACKGPS");
+      if (existingData) {
+        const estructura = JSON.parse(existingData);
+        const cadeteData = estructura[redisKey]?.[fechaKey]?.[cadete];
+
+        // Filtrar los datos por hora
+        if (cadeteData) {
+          const desde = new Date(
+            `${year}-${month}-${day} ${data.hora_desde}:00`
+          ).getTime();
+          const hasta = new Date(
+            `${year}-${month}-${day} ${data.hora_hasta}:00`
+          ).getTime();
+
+          const filteredData = cadeteData.filter((item) => {
+            // Convertir el formato de Redis a Date
+            const itemDate = new Date(
+              `${item.fecha.slice(0, 4)}-${item.fecha.slice(
+                4,
+                6
+              )}-${item.fecha.slice(6, 8)} ${item.fecha.slice(
+                8,
+                10
+              )}:${item.fecha.slice(10, 12)}:${item.fecha.slice(12, 14)}`
+            ).getTime();
+            return itemDate >= desde && itemDate <= hasta;
+          });
+
+          if (filteredData.length > 0) {
+            const response = {
+              coordenadas: filteredData.map((item) => ({
+                autofecha: item.fecha,
+                precision_gps: item.precision_gps,
+                idDispositovo: item.idDispositovo,
+                ilat: item.latitud,
+                ilog: item.longitud,
+              })),
+            };
+
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(response));
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error consultando Redis:", error);
+    }
+  }
+
+  // Si no hay datos en Redis o no es empresa 164, consulta a la base de datos
   const claveFechadb = `gps_${day}_${month}_${year}`;
-  const fechaFormateada = `${year}/${month}/${day}`; // --> "2025-04-10"
-  console.log(fechaFormateada, "dsasd");
+  const fechaFormateada = `${year}/${month}/${day}`; // "2025-04-10"
 
   const query = `
     SELECT * FROM ${claveFechadb} 
