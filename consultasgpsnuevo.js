@@ -320,6 +320,7 @@ async function obtenerrecorridocadete(connection, data, res) {
           const hasta = new Date(
             `${year}-${month}-${day} ${data.hora_hasta}:00`
           ).getTime();
+          console.log(`Desde: ${desde}, Hasta: ${hasta}`, "redisss");
 
           const filteredData = cadeteData.filter((item) => {
             // Convertir el formato de Redis a Date
@@ -561,7 +562,7 @@ app.post("/backgps", async (req, res) => {
     ...req.body,
     operador: "guardar",
   };
-  console.log(data, "data del viejo ");
+  // console.log(data, "data del viejo ");
 
   try {
     await sendToRabbitMQ(data);
