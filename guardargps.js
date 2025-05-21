@@ -134,9 +134,9 @@ async function insertData(connection, data) {
       ]);
 
       // Solo guardar en Redis si la empresa es 164
-      if (empresa === "164") {
+      if (empresa) {
         const fechaStr = getCurrentDateString(); // Obtener la fecha actual como string
-        const redisKey = "backgps"; // Clave única para todos los datos
+        const redisKey = "BACKGPS"; // Clave única para todos los datos
 
         const recorridoData = {
           latitud: ilat,
@@ -154,18 +154,23 @@ async function insertData(connection, data) {
           estructura = {};
         }
 
+        // Inicializar la empresa si no existe
+        if (!estructura[empresa]) {
+          estructura[empresa] = {};
+        }
+
         // Inicializar la fecha si no existe
-        if (!estructura[fechaStr]) {
-          estructura[fechaStr] = {};
+        if (!estructura[empresa][fechaStr]) {
+          estructura[empresa][fechaStr] = {};
         }
 
         // Inicializar el cadete si no existe
-        if (!estructura[fechaStr][cadete]) {
-          estructura[fechaStr][cadete] = [];
+        if (!estructura[empresa][fechaStr][cadete]) {
+          estructura[empresa][fechaStr][cadete] = [];
         }
 
         // Agregar el nuevo punto al recorrido
-        estructura[fechaStr][cadete].push(recorridoData);
+        estructura[empresa][fechaStr][cadete].push(recorridoData);
 
         // Guardar la nueva estructura en Redis
         await redisClient.set(redisKey, JSON.stringify(estructura));
