@@ -83,11 +83,6 @@ async function createTableIfNotExists(connection, fechaStr) {
 }
 
 async function insertData(connection, data) {
-  //if (data.ilat === 0 && data.ilong === 0  || data.ilat === "" && data.ilong === "" || data.ilat === null && data.ilong === null || data.ilat === undefined && data.ilong === undefined)  {
-  // console.log(data,"dataaaaaa");
-
-  //  return; // Salir de la función sin insertar
-  //}
   const {
     empresa = "",
     ilat = "",
@@ -100,9 +95,22 @@ async function insertData(connection, data) {
     idDispositivo = "",
     versionApp = "",
   } = data;
-  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado,hora,precision_gps,idDispositivo,versionApp) VALUES (?, ?, ?, ?, ?, ?, 0,?,?,?,?)`;
+
+  // Validar las coordenadas
+  if (
+    (ilat === 0 && ilong === 0) ||
+    (ilat === "" && ilong === "") ||
+    (ilat === null && ilong === null) ||
+    (ilat === undefined && ilong === undefined)
+  ) {
+    console.log(data, "dataaaaaa");
+    return; // Salir de la función sin insertar
+  }
+
+  const insertQuery = `INSERT INTO ${tableName} (didempresa, ilat, ilog, cadete, bateria, velocidad, superado, hora, precision_gps, idDispositivo, versionApp) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`;
 
   try {
+    // Insertar en la base de datos
     const [insertResult] = await executeWithRetry(connection, insertQuery, [
       empresa,
       ilat,
@@ -115,6 +123,7 @@ async function insertData(connection, data) {
       idDispositivo,
       versionApp,
     ]);
+
     if (insertResult.affectedRows > 0) {
       const idInsertado = insertResult.insertId;
       const updateQuery = `UPDATE ${tableName} SET superado = 1 WHERE didempresa = ? AND cadete = ? AND id != ? `;
@@ -123,9 +132,48 @@ async function insertData(connection, data) {
         cadete,
         idInsertado,
       ]);
+
+      // Solo guardar en Redis si la empresa es 164
+      if (empresa === "164") {
+        const fechaStr = getCurrentDateString(); // Obtener la fecha actual como string
+        const redisKey = "backgps"; // Clave única para todos los datos
+
+        const recorridoData = {
+          latitud: ilat,
+          longitud: ilong,
+          fecha: formatLocalDate(new Date()), // Formatear la fecha
+        };
+
+        // Obtener el valor actual de la clave
+        const existingData = await redisClient.get(redisKey);
+        let estructura;
+
+        if (existingData) {
+          estructura = JSON.parse(existingData);
+        } else {
+          estructura = {};
+        }
+
+        // Inicializar la fecha si no existe
+        if (!estructura[fechaStr]) {
+          estructura[fechaStr] = {};
+        }
+
+        // Inicializar el cadete si no existe
+        if (!estructura[fechaStr][cadete]) {
+          estructura[fechaStr][cadete] = [];
+        }
+
+        // Agregar el nuevo punto al recorrido
+        estructura[fechaStr][cadete].push(recorridoData);
+
+        // Guardar la nueva estructura en Redis
+        await redisClient.set(redisKey, JSON.stringify(estructura));
+        console.log(`Datos guardados en Redis con la clave: ${redisKey}`);
+      }
     }
   } catch (error) {
-    //   console.error("Error al insertar datos:", error);
+    console.error("Error al insertar datos:", error);
   }
 }
 
