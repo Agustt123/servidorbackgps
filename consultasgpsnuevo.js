@@ -504,7 +504,7 @@ app.post("/backgps", async (req, res) => {
     ...req.body,
     operador: "guardar",
   };
-  console.log(data, "data del viejo ");
+  //console.log(data, "data del viejo ");
 
   try {
     await sendToRabbitMQ(data);
