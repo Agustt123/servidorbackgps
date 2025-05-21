@@ -18,10 +18,11 @@ app.use(express.json()); // Middleware para parsear JSON
 app.use(cors());
 // Configuración de la base de datos
 const pool = mysql.createPool({
-  host: "10.70.0.67",
+  host: "149.56.182.49",
   user: "backgos",
   password: "pt25pt26pt",
   database: "gpsdata",
+  port: 44335,
 
   waitForConnections: true,
   connectionLimit: 10,
@@ -279,6 +280,7 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 async function obtenerrecorridocadete(connection, data, res) {
+  console.log("!!! consultas");
   const camposRequeridos = [
     "didempresa",
     "cadete",
@@ -306,7 +308,7 @@ async function obtenerrecorridocadete(connection, data, res) {
   const cadete = data.cadete;
 
   // Si la empresa es 164, primero consulta Redis
-  if (data.didempresa === "164") {
+  if (data.didempresa == "164") {
     try {
       const existingData = await redisClient.get("BACKGPS");
       if (existingData) {
@@ -592,5 +594,5 @@ app.get("/ping", (req, res) => {
 
 // Iniciar el servidor
 app.listen(port, () => {
-  //console.log(`Servidor corriendo en http://localhost:${port}`);
+  console.log(`Servidor corriendo en http://localhost:${port}`);
 });
