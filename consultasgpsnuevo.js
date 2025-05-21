@@ -4,6 +4,7 @@ const mysql = require("mysql2/promise");
 const redis = require("redis");
 const amqp = require("amqplib");
 const cors = require("cors");
+const { redisClient } = require("./dbconfig");
 
 let connection;
 let channel;
