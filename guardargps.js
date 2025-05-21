@@ -134,7 +134,7 @@ async function insertData(connection, data) {
       ]);
 
       // Solo guardar en Redis si la empresa es 164
-      if (empresa) {
+      if (empresa == "164") {
         const fechaStr = getCurrentDateString(); // Obtener la fecha actual como string
         const redisKey = "BACKGPS"; // Clave única para todos los datos
 
