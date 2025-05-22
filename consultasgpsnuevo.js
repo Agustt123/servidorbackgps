@@ -357,6 +357,8 @@ async function obtenerrecorridocadete(connection, data, res) {
       }
     } catch (error) {
       console.error("Error consultando Redis:", error);
+      // Si alguna propiedad de Redis está en null, sigue adelante y consulta la base de datos
+      console.log("Continuando con la consulta a la base de datos...");
     }
   }
 
