@@ -191,6 +191,41 @@ async function getAll(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 
+async function getAll2(connection, data, res, tableName) {
+  // 1. Obtener fecha actual en formato YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 2. Calcular hash SHA-256
+  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+
+  // 3. Verificar el hash recibido
+  if (!data.hash || data.hash !== expectedHash) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Hash inválido o no provisto" }));
+    return;
+  }
+
+  // Consulta a la base de datos
+  const query = `SELECT * FROM ${tableName} 
+                 WHERE superado = 0 
+                   AND didempresa = ? 
+                   AND ilat != 0 AND ilog != 0 
+                   AND ilat != '' AND ilog != '' 
+                   AND ilat IS NOT NULL AND ilog IS NOT NULL`;
+
+  const [results] = await connection.execute(query, [data.didempresa]);
+
+  const response = {
+    gps: results.map((row) => ({
+      ...row,
+      autofechaNg: formatDate(row.hora), // Asegúrate de que formatDate esté definida
+    })),
+  };
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(response));
+}
+
 // Función para formatear la fecha en "YYYY-MM-DD HH:MM:SS"
 function formatDate(dateString) {
   const date = new Date(dateString);
@@ -696,7 +731,7 @@ app.post("/consultas2", async (req, res) => {
         }
       });
     } else if (dataEntrada.operador == "getAll") {
-      await getAll(connection, dataEntrada, res, claveFechaDb);
+      await getAll2(connection, dataEntrada, res, claveFechaDb);
     } else if (dataEntrada.operador == "cadeteFiltrado") {
       await obtenerHorasCadetesPorFecha(
         connection,
