@@ -191,8 +191,6 @@ async function getAll(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 
-const crypto = require("crypto");
-
 async function getAll2(connection, data, res, tableName) {
   if (!data.token) {
     res.writeHead(401, { "Content-Type": "application/json" });
