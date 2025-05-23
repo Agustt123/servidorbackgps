@@ -220,16 +220,15 @@ async function getAll2(connection, data, res, tableName) {
 
   const [results] = await connection.execute(query, [data.didempresa]);
 
-  // Agrupar por cadete
+  // Usamos un objeto donde cada key es el cadete y el valor es el último registro encontrado
   const agrupadoPorCadete = {};
 
   for (const row of results) {
     const cadeteId = row.cadete;
-
-    agrupadoPorCadete[cadeteId].push({
+    agrupadoPorCadete[cadeteId] = {
       ...row,
       autofechaNg: formatDate(row.hora),
-    });
+    };
   }
 
   res.writeHead(200, { "Content-Type": "application/json" });
