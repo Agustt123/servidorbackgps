@@ -191,26 +191,32 @@ async function getAll(connection, data, res, tableName) {
   res.end(JSON.stringify(response));
 }
 
+const crypto = require("crypto");
+
 async function getAll2(connection, data, res, tableName) {
-  if (!data.horaInicio || !data.token) {
+  if (!data.token) {
     res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({ error: "Parámetros horaInicio o token faltantes" })
-    );
+    res.end(JSON.stringify({ error: "Token no provisto" }));
     return;
   }
 
-  // Calcular hash SHA-256 de data.horaInicio (string exacto que manda front)
-  const expectedHash = crypto
-    .createHash("sha256")
-    .update(data.token)
-    .digest("hex");
-  console.log(expectedHash, "expectedHash");
+  // 1. Obtener la fecha de hoy en formato YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
 
-  // Comparar con el token recibido
+  // 2. Calcular el hash SHA-256 de la fecha
+  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+
+  console.log("Token recibido:", data.token);
+  console.log("Hash esperado:", expectedHash);
+
+  // 3. Comparar con el token recibido
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
     res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Token inválido o no provisto" }));
+    res.end(
+      JSON.stringify({
+        error: "Token inválido o no coincide con la fecha actual",
+      })
+    );
     return;
   }
 
