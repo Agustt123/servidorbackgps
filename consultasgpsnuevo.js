@@ -199,6 +199,9 @@ async function getAll2(connection, data, res, tableName) {
   // 2. Calcular hash SHA-256
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
 
+  console.log("Token recibido:", `"${data.token}"`, data.token.length);
+  console.log("Hash esperado:", `"${expectedHash}"`, expectedHash.length);
+
   // 3. Verificar el token recibido
   if (!data.token || data.token !== expectedHash) {
     res.writeHead(401, { "Content-Type": "application/json" });
