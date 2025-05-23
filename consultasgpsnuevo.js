@@ -225,9 +225,6 @@ async function getAll2(connection, data, res, tableName) {
 
   for (const row of results) {
     const cadeteId = row.cadete;
-    if (!agrupadoPorCadete[cadeteId]) {
-      agrupadoPorCadete[cadeteId] = [];
-    }
 
     agrupadoPorCadete[cadeteId].push({
       ...row,
