@@ -4,6 +4,7 @@ const mysql = require("mysql2/promise");
 const redis = require("redis");
 const amqp = require("amqplib");
 const cors = require("cors");
+const crypto = require("crypto");
 const { redisClient } = require("./dbconfig");
 
 let connection;
@@ -85,6 +86,54 @@ process.on("exit", async () => {
   console.log("🔌 Conexión a RabbitMQ cerrada");
 });
 async function getActualData(connection, data, res, tableName) {
+  const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
+                 FROM ${tableName} 
+                 WHERE didempresa = ? 
+                   AND cadete = ? 
+                   AND superado = 0  
+                   AND ilat IS NOT NULL AND ilog IS NOT NULL
+                   AND ilat != 0 AND ilog != 0
+                   AND ilat != '' AND ilog != ''
+                 ORDER BY autofecha DESC 
+                 LIMIT 5`;
+
+  const [results] = await connection.execute(query, [
+    data.empresa,
+    data.cadete,
+  ]);
+
+  const validResult = results.find(
+    (r) =>
+      r.ilat !== null &&
+      r.ilog !== null &&
+      r.ilat !== 0 &&
+      r.ilog !== 0 &&
+      r.ilat !== "" &&
+      r.ilog !== "" &&
+      typeof r.ilat !== "undefined" &&
+      typeof r.ilog !== "undefined"
+  );
+
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(validResult ? [validResult] : []));
+}
+// al principio de tu archivo si no está importado
+
+async function getActualData2(connection, data, res, tableName) {
+  // 1. Obtener fecha actual en formato YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10); // '2025-05-22'
+
+  // 2. Calcular hash SHA-256
+  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+
+  // 3. Verificar el hash recibido
+  if (!data.token || data.token !== expectedHash) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Hash inválido o no provisto" }));
+    return;
+  }
+
+  // Consulta a la base de datos
   const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
                  FROM ${tableName} 
                  WHERE didempresa = ? 
@@ -591,6 +640,86 @@ app.get("/ping", (req, res) => {
   res.status(200).json({
     hora: formattedTime,
   });
+});
+app.post("/consultas2", async (req, res) => {
+  const dataEntrada = req.body;
+  const connection = await pool.getConnection();
+
+  if (!dataEntrada.operador) {
+    return res
+      .status(400)
+      .json({ error: 'Falta la clave "operador" en el body' });
+  }
+
+  // Obtener la fecha actual en formato YYYY_MM_DD
+  const fecha = new Date();
+  const claveFechaRedis = `${fecha.getFullYear()}_${(fecha.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}_${fecha.getDate().toString().padStart(2, "0")}`;
+  const claveFechaDb = `gps_${fecha.getDate().toString().padStart(2, "0")}_${(
+    fecha.getMonth() + 1
+  )
+    .toString()
+    .padStart(2, "0")}_${fecha.getFullYear()}`;
+  //console.log(claveFechaRedis);
+  //console.log(claveFechaDb);
+
+  //await redisClient.connect();
+
+  try {
+    //console.log(dataEntrada.operador);
+
+    if (dataEntrada.operador == "getActual") {
+      await getActualData2(connection, dataEntrada, res, claveFechaDb);
+    } else if (dataEntrada.operador == "getHistorial") {
+      await getHistorial(connection, dataEntrada, res, claveFechaDb);
+    } else if (dataEntrada.operador == "guardar") {
+      let body = "";
+
+      req.on("data", (chunk) => {
+        body += chunk.toString();
+      });
+
+      req.on("end", () => {
+        dataEntrada = JSON.parse(body); // Parseamos el JSON recibido
+
+        const todayToken = `${year}${month}${day}`;
+        if (1 == 1) {
+          // Si decides validar el token, cambia esta línea
+
+          // Enviar directamente los datos a RabbitMQ
+          sendToRabbitMQ(dataEntrada);
+
+          // Responder al cliente (opcional)
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: "true" }));
+        }
+      });
+    } else if (dataEntrada.operador == "getAll") {
+      await getAll(connection, dataEntrada, res, claveFechaDb);
+    } else if (dataEntrada.operador == "cadeteFiltrado") {
+      await obtenerHorasCadetesPorFecha(
+        connection,
+        dataEntrada,
+        res,
+        claveFechaDb
+      );
+    } else if (dataEntrada.operador == "cadeteFiltradoUnico") {
+      await obtenerHorasCadetePorFecha(
+        connection,
+        dataEntrada,
+        res,
+        claveFechaDb
+      );
+    } else if (dataEntrada.operador == "recorridoCadete") {
+      await obtenerrecorridocadete(connection, dataEntrada, res);
+    }
+  } catch (error) {
+    console.error("Error obteniendo datos de Redis:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  } finally {
+    connection.release();
+  }
 });
 
 // Iniciar el servidor

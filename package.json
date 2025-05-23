@@ -12,6 +12,7 @@
   "dependencies": {
     "amqplib": "^0.10.5",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "express": "^4.21.2",
     "http": "^0.0.1-security",
     "mysql": "^2.18.1",
