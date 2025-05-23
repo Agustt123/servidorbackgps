@@ -194,6 +194,7 @@ async function getAll(connection, data, res, tableName) {
 async function getAll2(connection, data, res, tableName) {
   // 1. Obtener fecha actual en formato YYYY-MM-DD
   const today = new Date().toISOString().slice(0, 10);
+  console.log(data, "fdsdfss");
 
   // 2. Calcular hash SHA-256
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
