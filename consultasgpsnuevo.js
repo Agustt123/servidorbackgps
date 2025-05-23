@@ -199,7 +199,7 @@ async function getAll2(connection, data, res, tableName) {
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
 
   // 3. Verificar el hash recibido
-  if (!data.hash || data.hash !== expectedHash) {
+  if (!data.token || data.token !== expectedHash) {
     res.writeHead(401, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Hash inválido o no provisto" }));
     return;
