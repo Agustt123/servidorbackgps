@@ -192,18 +192,22 @@ async function getAll(connection, data, res, tableName) {
 }
 
 async function getAll2(connection, data, res, tableName) {
-  // 1. Obtener fecha actual en formato YYYY-MM-DD
-  const today = new Date().toISOString().slice(0, 10);
-  console.log(data, "fdsdfss");
+  if (!data.horaInicio || !data.token) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({ error: "Parámetros horaInicio o token faltantes" })
+    );
+    return;
+  }
 
-  // 2. Calcular hash SHA-256
-  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+  // Calcular hash SHA-256 de data.horaInicio (string exacto que manda front)
+  const expectedHash = crypto
+    .createHash("sha256")
+    .update(data.horaInicio)
+    .digest("hex");
 
-  console.log("Token recibido:", `"${data.token}"`, data.token.length);
-  console.log("Hash esperado:", `"${expectedHash}"`, expectedHash.length);
-
-  // 3. Verificar el token recibido
-  if (!data.token || data.token !== expectedHash) {
+  // Comparar con el token recibido
+  if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
     res.writeHead(401, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Token inválido o no provisto" }));
     return;
@@ -222,7 +226,7 @@ async function getAll2(connection, data, res, tableName) {
   const response = {
     gps: results.map((row) => ({
       ...row,
-      autofechaNg: formatDate(row.hora), // Asegúrate de que formatDate esté definida
+      autofechaNg: formatDate(row.hora),
     })),
   };
 
