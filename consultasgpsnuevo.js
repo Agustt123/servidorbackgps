@@ -198,16 +198,9 @@ async function getAll2(connection, data, res, tableName) {
     return;
   }
 
-  // 1. Obtener la fecha de hoy en formato YYYY-MM-DD
   const today = new Date().toISOString().slice(0, 10);
-
-  // 2. Calcular el hash SHA-256 de la fecha
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
 
-  console.log("Token recibido:", data.token);
-  console.log("Hash esperado:", expectedHash);
-
-  // 3. Comparar con el token recibido
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
     res.writeHead(401, { "Content-Type": "application/json" });
     res.end(
@@ -218,7 +211,6 @@ async function getAll2(connection, data, res, tableName) {
     return;
   }
 
-  // Consulta a la base de datos
   const query = `SELECT * FROM ${tableName} 
                  WHERE superado = 0 
                    AND didempresa = ? 
@@ -228,15 +220,23 @@ async function getAll2(connection, data, res, tableName) {
 
   const [results] = await connection.execute(query, [data.didempresa]);
 
-  const response = {
-    gps: results.map((row) => ({
+  // Agrupar por cadete
+  const agrupadoPorCadete = {};
+
+  for (const row of results) {
+    const cadeteId = row.cadete;
+    if (!agrupadoPorCadete[cadeteId]) {
+      agrupadoPorCadete[cadeteId] = [];
+    }
+
+    agrupadoPorCadete[cadeteId].push({
       ...row,
       autofechaNg: formatDate(row.hora),
-    })),
-  };
+    });
+  }
 
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(response));
+  res.end(JSON.stringify(agrupadoPorCadete));
 }
 
 // Función para formatear la fecha en "YYYY-MM-DD HH:MM:SS"
