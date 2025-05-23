@@ -203,8 +203,9 @@ async function getAll2(connection, data, res, tableName) {
   // Calcular hash SHA-256 de data.horaInicio (string exacto que manda front)
   const expectedHash = crypto
     .createHash("sha256")
-    .update(data.horaInicio)
+    .update(data.token)
     .digest("hex");
+  console.log(expectedHash, "expectedHash");
 
   // Comparar con el token recibido
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
