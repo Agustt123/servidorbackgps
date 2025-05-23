@@ -687,6 +687,7 @@ app.get("/ping", (req, res) => {
 app.post("/consultas2", async (req, res) => {
   const dataEntrada = req.body;
   const connection = await pool.getConnection();
+  console.log(dataEntrada, "dataaaaa");
 
   if (!dataEntrada.operador) {
     return res
