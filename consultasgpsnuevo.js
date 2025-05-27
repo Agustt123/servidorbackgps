@@ -719,6 +719,8 @@ app.post("/consultas2", async (req, res) => {
     } else if (dataEntrada.operador == "getHistorial") {
       await getHistorial(connection, dataEntrada, res, claveFechaDb);
     } else if (dataEntrada.operador == "guardar") {
+      console.log("Guardando datos en RabbitMQ...");
+
       let body = "";
 
       req.on("data", (chunk) => {
@@ -733,6 +735,8 @@ app.post("/consultas2", async (req, res) => {
           // Si decides validar el token, cambia esta línea
 
           // Enviar directamente los datos a RabbitMQ
+          console.log(dataEntrada, "dataEntrada");
+
           sendToRabbitMQ(dataEntrada);
 
           // Responder al cliente (opcional)
