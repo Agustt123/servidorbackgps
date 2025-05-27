@@ -177,7 +177,7 @@ async function insertData(connection, data) {
 
         // Guardar la nueva estructura en Redis
         await redisClient.set(redisKey, JSON.stringify(estructura));
-        console.log(`Datos guardados en Redis con la clave: ${redisKey}`);
+        //  console.log(`Datos guardados en Redis con la clave: ${redisKey}`);
       }
     }
   } catch (error) {
