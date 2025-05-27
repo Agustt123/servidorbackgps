@@ -192,7 +192,7 @@ async function listenToRabbitMQ() {
   const connectAndConsume = async () => {
     try {
       connection = await amqp.connect(
-        "amqp://lightdata:QQyfVBKRbw6fBb@10.60.0.125:5672"
+        "amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672"
       );
       channel = await connection.createChannel();
       await channel.prefetch(1000);
