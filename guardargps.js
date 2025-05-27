@@ -134,7 +134,7 @@ async function insertData(connection, data) {
       ]);
 
       // Solo guardar en Redis si la empresa es 164
-      if (empresa == "164") {
+      /*  if (empresa == "164") {
         const fechaStr = getCurrentDateString(); // Obtener la fecha actual como string
         const redisKey = "BACKGPS"; // Clave única para todos los datos
 
@@ -178,7 +178,7 @@ async function insertData(connection, data) {
         // Guardar la nueva estructura en Redis
         await redisClient.set(redisKey, JSON.stringify(estructura));
         //  console.log(`Datos guardados en Redis con la clave: ${redisKey}`);
-      }
+      }*/
     }
   } catch (error) {
     console.error("Error al insertar datos:", error);
