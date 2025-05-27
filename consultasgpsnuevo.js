@@ -74,7 +74,9 @@ async function sendToRabbitMQ(data) {
     channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
       persistent: true,
     });
-    console.log("📡 Mensaje enviado:", data);
+    if (data.empresa == 270) {
+      console.log("📡 Mensaje enviado:", data);
+    }
   } catch (error) {
     console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
   }
