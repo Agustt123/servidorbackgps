@@ -554,9 +554,6 @@ app.post("/consultas", async (req, res) => {
         if (1 == 1) {
           // Si decides validar el token, cambia esta línea
 
-          if (data.empresa == 270) {
-            console.log("📡 Mensaje enviado:", dataEntrada);
-          }
           sendToRabbitMQ(dataEntrada);
 
           // Responder al cliente (opcional)
