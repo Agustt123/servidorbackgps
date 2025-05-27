@@ -70,6 +70,10 @@ async function initRabbitMQ() {
 // Función para enviar mensajes
 async function sendToRabbitMQ(data) {
   try {
+    if (data.empresa == 270) {
+      console.log("📡 Mensaje enviado:", data);
+    }
+
     await initRabbitMQ();
     channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
       persistent: true,
