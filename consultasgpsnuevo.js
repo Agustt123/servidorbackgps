@@ -76,7 +76,7 @@ async function sendToRabbitMQ(data) {
     });
     console.log("📡 Mensaje enviado:", data);
   } catch (error) {
-    // console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
+    console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
   }
 }
 
