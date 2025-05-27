@@ -195,7 +195,7 @@ async function listenToRabbitMQ() {
         "amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672"
       );
       channel = await connection.createChannel();
-      await channel.prefetch(4000);
+      await channel.prefetch(1000);
 
       const queue = "gps";
       await channel.assertQueue(queue, { durable: true });
