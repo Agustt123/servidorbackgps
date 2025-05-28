@@ -506,7 +506,148 @@ async function obtenerrecorridocadete(connection, data, res) {
     res.end(JSON.stringify({ error: "Error al ejecutar la consulta SQL" }));
   }
 }
+async function obtenerrecorridocadete2(connection, data, res) {
+  const today = new Date().toISOString().slice(0, 10);
+  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
 
+  if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: "Token inválido ",
+      })
+    );
+    return;
+  }
+
+  const camposRequeridos = [
+    "didempresa",
+    "cadete",
+    "fecha_desde",
+    "hora_desde",
+    "hora_hasta",
+  ];
+
+  const faltantes = camposRequeridos.filter(
+    (campo) => data[campo] === undefined
+  );
+
+  if (faltantes.length > 0) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: `Faltan los siguientes campos: ${faltantes.join(", ")}`,
+      })
+    );
+    return;
+  }
+
+  const [day, month, year] = data.fecha_desde.split("/"); // "10/04/2025"
+  const fechaKey = `${year}${month}${day}`; // "20250521"
+  const redisKey = data.didempresa; // La empresa a consultar
+  const cadete = data.cadete;
+
+  // Si la empresa es 164, primero consulta Redis
+  if (data.didempresa == "164") {
+    try {
+      const existingData = await redisClient.get("BACKGPS");
+      if (existingData) {
+        const estructura = JSON.parse(existingData);
+        const cadeteData = estructura[redisKey]?.[fechaKey]?.[cadete];
+
+        // Filtrar los datos por hora
+        if (cadeteData) {
+          const desde = new Date(
+            `${year}-${month}-${day} ${data.hora_desde}:00`
+          ).getTime();
+          const hasta = new Date(
+            `${year}-${month}-${day} ${data.hora_hasta}:00`
+          ).getTime();
+          console.log(`Desde: ${desde}, Hasta: ${hasta}`, "redisss");
+
+          const filteredData = cadeteData.filter((item) => {
+            // Convertir el formato de Redis a Date
+            const itemDate = new Date(
+              `${item.fecha.slice(0, 4)}-${item.fecha.slice(
+                4,
+                6
+              )}-${item.fecha.slice(6, 8)} ${item.fecha.slice(
+                8,
+                10
+              )}:${item.fecha.slice(10, 12)}:${item.fecha.slice(12, 14)}`
+            ).getTime();
+            return itemDate >= desde && itemDate <= hasta;
+          });
+
+          if (filteredData.length > 0) {
+            const response = {
+              coordenadas: filteredData.map((item) => ({
+                autofecha: item.fecha,
+                precision_gps: item.precision_gps,
+                idDispositovo: item.idDispositovo,
+                ilat: item.latitud,
+                ilog: item.longitud,
+              })),
+            };
+
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(response));
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error consultando Redis:", error);
+      // Si alguna propiedad de Redis está en null, sigue adelante y consulta la base de datos
+      console.log("Continuando con la consulta a la base de datos...");
+    }
+  }
+
+  // Si no hay datos en Redis o no es empresa 164, consulta a la base de datos
+  const claveFechadb = `gps_${day}_${month}_${year}`;
+  const fechaFormateada = `${year}/${month}/${day}`; // "2025-04-10"
+
+  const query = `
+    SELECT * FROM ${claveFechadb} 
+    WHERE didempresa = ? 
+      AND cadete = ? 
+      AND autofecha BETWEEN ? AND ? and ilat != 0 and ilog != 0
+  `;
+
+  const desde = `${fechaFormateada} ${data.hora_desde}:00`;
+  const hasta = `${fechaFormateada} ${data.hora_hasta}:00`;
+
+  try {
+    const [results] = await connection.execute(query, [
+      data.didempresa,
+      data.cadete,
+      desde,
+      hasta,
+    ]);
+
+    const response = {
+      coordenadas: [],
+    };
+
+    results.forEach((row) => {
+      const formattedAutofecha = formatFecha(row.autofecha);
+      response.coordenadas.push({
+        autofecha: formattedAutofecha,
+        precision_gps: row.precision_gps,
+        idDispositovo: row.idDispositivo,
+        ilat: row.ilat,
+        ilog: row.ilog,
+      });
+    });
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(response));
+  } catch (error) {
+    console.error("Error ejecutando la consulta:", error);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Error al ejecutar la consulta SQL" }));
+  }
+}
 // Endpoint POST para recibir un JSON con clave "operador"
 app.post("/consultas", async (req, res) => {
   const dataEntrada = req.body;
@@ -766,7 +907,7 @@ app.post("/consultas2", async (req, res) => {
         claveFechaDb
       );
     } else if (dataEntrada.operador == "recorridoCadete") {
-      await obtenerrecorridocadete(connection, dataEntrada, res);
+      await obtenerrecorridocadete2(connection, dataEntrada, res);
     }
   } catch (error) {
     console.error("Error obteniendo datos de Redis:", error);
