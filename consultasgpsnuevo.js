@@ -202,7 +202,7 @@ async function getAll(connection, data, res, tableName) {
     return;
   }
 
-  const query = `SELECT * FROM ${tableName} 
+  const query = `SELECT hora,bateria,cadete,didempresa,ilat,ilog,precision_gps FROM ${tableName} 
                  WHERE superado = 0 
                    AND didempresa = ? 
                    AND ilat != 0 AND ilog != 0 
