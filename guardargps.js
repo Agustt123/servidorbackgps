@@ -188,7 +188,6 @@ async function insertData(connection, data) {
 async function listenToRabbitMQ() {
   let connection;
   let channel;
-  let reconnecting = false; // Variable para controlar el estado de reconexión
 
   const connectAndConsume = async () => {
     try {
@@ -216,7 +215,7 @@ async function listenToRabbitMQ() {
             return `gps_${day}_${month}_${year}`;
           };
 
-          const tableName = getTableName();
+          tableName = getTableName();
 
           try {
             switch (dataEntrada.operador) {
@@ -235,7 +234,7 @@ async function listenToRabbitMQ() {
               // console.error("Operador inválido:", dataEntrada.operador);
             }
           } catch (error) {
-            // console.error("Error procesando mensaje:", error);
+            //  console.error("Error procesando mensaje:", error);
             channel.nack(msg, false, false);
           } finally {
             dbConnection.release();
@@ -246,43 +245,37 @@ async function listenToRabbitMQ() {
 
       connection.on("error", (err) => {
         console.error("Error en la conexión:", err);
-        handleReconnect();
+        reconnect();
       });
 
       connection.on("close", () => {
         console.error("Conexión cerrada. Reconectando...");
-        handleReconnect();
+        reconnect();
       });
 
       channel.on("error", (err) => {
         console.error("Error en el canal:", err);
-        handleReconnect();
+        reconnect();
       });
 
       channel.on("close", () => {
         console.error("Canal cerrado. Reconectando...");
-        handleReconnect();
+        reconnect();
       });
     } catch (err) {
       console.error("Error al conectar a RabbitMQ:", err);
-      setTimeout(handleReconnect, 5000);
+      setTimeout(reconnect, 5000);
     }
   };
 
-  const handleReconnect = async () => {
-    if (reconnecting) return; // Evitar múltiples reconexiones
-    reconnecting = true;
-
+  const reconnect = async () => {
     try {
       if (channel) await channel.close().catch(() => {});
       if (connection) await connection.close().catch(() => {});
     } catch (err) {
       console.error("Error cerrando recursos: ", err);
     }
-    setTimeout(() => {
-      reconnecting = false; // Restablecer estado de reconexión
-      connectAndConsume();
-    }, 5000);
+    setTimeout(connectAndConsume, 5000);
   };
 
   await connectAndConsume();
