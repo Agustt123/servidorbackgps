@@ -215,7 +215,7 @@ async function listenToRabbitMQ() {
             return `gps_${day}_${month}_${year}`;
           };
 
-          tableName = getTableName();
+          tableName = getTableName(); // Mantener tu lógica
 
           try {
             switch (dataEntrada.operador) {
@@ -229,13 +229,15 @@ async function listenToRabbitMQ() {
                   "Datos en dataStore:",
                   JSON.stringify(dataStore, null, 2)
                 );
+                channel.ack(msg); // Confirmar el mensaje para este caso también
                 break;
               default:
-              // console.error("Operador inválido:", dataEntrada.operador);
+                console.error("Operador inválido:", dataEntrada.operador);
+                channel.nack(msg, false, false); // No confirmar el mensaje
             }
           } catch (error) {
-            //  console.error("Error procesando mensaje:", error);
-            channel.nack(msg, false, false);
+            console.error("Error procesando mensaje:", error);
+            channel.nack(msg, false, false); // No confirmar el mensaje
           } finally {
             dbConnection.release();
           }
@@ -270,8 +272,16 @@ async function listenToRabbitMQ() {
 
   const reconnect = async () => {
     try {
-      if (channel) await channel.close().catch(() => {});
-      if (connection) await connection.close().catch(() => {});
+      if (channel) {
+        await channel.close().catch((err) => {
+          console.error("Error cerrando el canal:", err);
+        });
+      }
+      if (connection) {
+        await connection.close().catch((err) => {
+          console.error("Error cerrando la conexión:", err);
+        });
+      }
     } catch (err) {
       console.error("Error cerrando recursos: ", err);
     }
