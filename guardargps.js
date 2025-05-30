@@ -188,6 +188,7 @@ async function insertData(connection, data) {
 async function listenToRabbitMQ() {
   let connection;
   let channel;
+  let reconnecting = false; // Control de reconexión
 
   const connectAndConsume = async () => {
     try {
@@ -205,17 +206,7 @@ async function listenToRabbitMQ() {
         async (msg) => {
           const dataEntrada = JSON.parse(msg.content.toString());
           const dbConnection = await pool.getConnection();
-
-          const getTableName = () => {
-            const now = new Date();
-            now.setHours(now.getHours() - 3);
-            const year = now.getFullYear();
-            const month = ("0" + (now.getMonth() + 1)).slice(-2);
-            const day = ("0" + now.getDate()).slice(-2);
-            return `gps_${day}_${month}_${year}`;
-          };
-
-          tableName = getTableName();
+          const tableName = getTableName();
 
           try {
             switch (dataEntrada.operador) {
@@ -231,10 +222,10 @@ async function listenToRabbitMQ() {
                 );
                 break;
               default:
-              // console.error("Operador inválido:", dataEntrada.operador);
+                console.error("Operador inválido:", dataEntrada.operador);
             }
           } catch (error) {
-            //  console.error("Error procesando mensaje:", error);
+            console.error("Error procesando mensaje:", error);
             channel.nack(msg, false, false);
           } finally {
             dbConnection.release();
@@ -243,39 +234,39 @@ async function listenToRabbitMQ() {
         { noAck: false }
       );
 
-      connection.on("error", (err) => {
-        console.error("Error en la conexión:", err);
-        reconnect();
-      });
-
-      connection.on("close", () => {
-        console.error("Conexión cerrada. Reconectando...");
-        reconnect();
-      });
-
-      channel.on("error", (err) => {
-        console.error("Error en el canal:", err);
-        reconnect();
-      });
-
-      channel.on("close", () => {
-        console.error("Canal cerrado. Reconectando...");
-        reconnect();
-      });
+      connection.on("error", handleReconnect);
+      connection.on("close", handleReconnect);
+      channel.on("error", handleReconnect);
+      channel.on("close", handleReconnect);
     } catch (err) {
       console.error("Error al conectar a RabbitMQ:", err);
-      setTimeout(reconnect, 5000);
+      handleReconnect();
     }
   };
 
-  const reconnect = async () => {
+  const handleReconnect = async () => {
+    if (reconnecting) return; // Evitar múltiples reconexiones
+    reconnecting = true;
+
     try {
       if (channel) await channel.close().catch(() => {});
       if (connection) await connection.close().catch(() => {});
     } catch (err) {
       console.error("Error cerrando recursos: ", err);
     }
-    setTimeout(connectAndConsume, 5000);
+    setTimeout(() => {
+      reconnecting = false; // Restablecer estado de reconexión
+      connectAndConsume();
+    }, 5000);
+  };
+
+  const getTableName = () => {
+    const now = new Date();
+    now.setHours(now.getHours() - 3);
+    const year = now.getFullYear();
+    const month = ("0" + (now.getMonth() + 1)).slice(-2);
+    const day = ("0" + now.getDate()).slice(-2);
+    return `gps_${day}_${month}_${year}`;
   };
 
   await connectAndConsume();
