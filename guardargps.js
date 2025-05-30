@@ -191,9 +191,17 @@ async function listenToRabbitMQ() {
 
   const connectAndConsume = async () => {
     try {
-      connection = await amqp.connect(
-        "amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672"
-      );
+      connection = await amqp.connect({
+        protocol: "amqp",
+        hostname: "158.69.131.226",
+        port: 5672,
+        username: "lightdata",
+        password: "QQyfVBKRbw6fBb",
+        clientProperties: {
+          connection_name: "gps_consumer_1", // <- Acá poné un nombre único por script
+        },
+      });
+
       channel = await connection.createChannel();
       await channel.prefetch(1000);
 
