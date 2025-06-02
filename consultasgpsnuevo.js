@@ -507,7 +507,7 @@ async function obtenerrecorridocadete(connection, data, res) {
 }
 
 async function checkCadete(connection, data) {
-  const query = `SELECT * FROM cadetes WHERE didempresa = ? AND cadete = ?`;
+  const query = `SELECT * FROM gps_${data.fecha}  WHERE didempresa = ? AND cadete = ?`;
   const [results] = await connection.execute(query, [
     data.didempresa,
     data.cadete,
