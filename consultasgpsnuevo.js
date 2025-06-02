@@ -506,23 +506,44 @@ async function obtenerrecorridocadete(connection, data, res) {
   }
 }
 
-async function checkCadete(connection, data, res) {
+async function checkCadete(connection, data) {
   const query = `SELECT * FROM cadetes WHERE didempresa = ? AND cadete = ?`;
   const [results] = await connection.execute(query, [
     data.didempresa,
     data.cadete,
-    data.fecha,
   ]);
-  console.log(query, "query");
-
-  if (results.length > 0) {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ existe: true }));
-  } else {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ existe: false }));
-  }
+  return results.length > 0;
 }
+
+app.post("/check", async (req, res) => {
+  const data = req.body;
+  const connection = await pool.getConnection();
+
+  if (!data.didempresa || !data.cadete) {
+    connection.release();
+    return res.status(400).json({
+      error: "Faltan datos requeridos (didempresa o cadete)",
+    });
+  }
+
+  try {
+    const existe = await checkCadete(connection, data);
+    connection.release();
+
+    if (existe) {
+      return res.status(200).json({ existe: true });
+    } else {
+      return res.status(404).json({ existe: false });
+    }
+  } catch (error) {
+    console.error("Error al verificar cadete:", error);
+    connection.release();
+    return res
+      .status(500)
+      .json({ ok: false, error: "Error interno del servidor" });
+  }
+});
+
 // Endpoint POST para recibir un JSON con clave "operador"
 app.post("/consultas", async (req, res) => {
   const dataEntrada = req.body;
