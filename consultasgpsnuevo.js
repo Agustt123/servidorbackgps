@@ -505,6 +505,23 @@ async function obtenerrecorridocadete(connection, data, res) {
     res.end(JSON.stringify({ error: "Error al ejecutar la consulta SQL" }));
   }
 }
+
+async function checkCadete(connection, data, res) {
+  const query = `SELECT * FROM cadetes WHERE didempresa = ? AND cadete = ?`;
+  const [results] = await connection.execute(query, [
+    data.didempresa,
+    data.cadete,
+    data.fecha,
+  ]);
+
+  if (results.length > 0) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ existe: true }));
+  } else {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ existe: false }));
+  }
+}
 // Endpoint POST para recibir un JSON con clave "operador"
 app.post("/consultas", async (req, res) => {
   const dataEntrada = req.body;
@@ -672,7 +689,29 @@ app.post("/backgps", async (req, res) => {
     res.status(500).json({ ok: false, error: "No se pudo enviar a RabbitMQ" });
   }
 });
+app.post("/check", async (req, res) => {
+  const data = req.body;
+  const connection = await pool.getConnection();
+  if (!data.didempresa || !data.cadete) {
+    return res.status(400).json({
+      error: "Faltan datos requeridos (didempresa o cadete)",
+    });
+  }
+  try {
+    await checkCadete(connection, data, res);
+  } catch (error) {
+    console.error("Error al enviar mensaje:", error);
+    res.status(500).json({ ok: false, error: "No se pudo enviar a RabbitMQ" });
+  }
+  //console.log(data, "data del viejo ");
 
+  try {
+    res.status(200).json({ ok: true, mensaje: "Mensaje enviado a RabbitMQ" });
+  } catch (error) {
+    console.error("❌ Error al enviar mensaje:", error);
+    res.status(500).json({ ok: false, error: "No se pudo enviar a RabbitMQ" });
+  }
+});
 app.get("/ping", (req, res) => {
   const currentDate = new Date();
   currentDate.setHours(currentDate.getHours()); // Resta 3 horas
