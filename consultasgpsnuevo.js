@@ -513,6 +513,7 @@ async function checkCadete(connection, data, res) {
     data.cadete,
     data.fecha,
   ]);
+  console.log(query, "query");
 
   if (results.length > 0) {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -692,12 +693,16 @@ app.post("/backgps", async (req, res) => {
 app.post("/check", async (req, res) => {
   const data = req.body;
   const connection = await pool.getConnection();
+  console.log(data);
+
   if (!data.didempresa || !data.cadete) {
     return res.status(400).json({
       error: "Faltan datos requeridos (didempresa o cadete)",
     });
   }
   try {
+    console.log("entre");
+
     await checkCadete(connection, data, res);
   } catch (error) {
     console.error("Error al enviar mensaje:", error);
