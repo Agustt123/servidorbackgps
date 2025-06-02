@@ -533,7 +533,7 @@ app.post("/check", async (req, res) => {
     if (existe) {
       return res.status(200).json({ existe: true });
     } else {
-      return res.status(404).json({ existe: false });
+      return res.status(200).json({ existe: false });
     }
   } catch (error) {
     console.error("Error al verificar cadete:", error);
