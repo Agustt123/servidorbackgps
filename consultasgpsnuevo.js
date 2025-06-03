@@ -740,7 +740,7 @@ app.post("/check", async (req, res) => {
 });
 
 app.post("/test-connection", async (req, res) => {
-  const { host, port, user, password } = req.body;
+  const { host, port, user, pass } = req.body;
 
   let connection;
   try {
@@ -748,7 +748,7 @@ app.post("/test-connection", async (req, res) => {
       host,
       port,
       user,
-      password,
+      pass,
     });
 
     // Test simple: ejecutar una query como "SELECT 1"
