@@ -1,0 +1,30 @@
+const nodemailer = require("nodemailer");
+
+/**
+ * Envía un correo electrónico usando nodemailer.
+ * @param {string} asunto - El asunto del correo.
+ * @param {string} mensaje - El cuerpo del mensaje.
+ * @param {string} destinatario - El email del destinatario.
+ * @returns {Promise<void>}
+ */
+async function enviarCorreo(asunto, mensaje, destinatario) {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com", // o el SMTP de tu proveedor
+    port: 587,
+    secure: false,
+    auth: {
+      user: "lightdataargentina@gmail.com",
+      pass: "sjexjcjixmesdjyv", // usar App Password si es Gmail
+    },
+  });
+
+  await transporter.sendMail({
+    from: '"Nombre Remitente" <tu_correo@gmail.com>',
+    to: destinatario,
+    subject: asunto,
+    text: mensaje,
+    html: `<p>${mensaje}</p>`, // opcional: cuerpo en HTML
+  });
+}
+
+module.exports = { enviarCorreo };

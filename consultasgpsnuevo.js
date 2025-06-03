@@ -6,6 +6,7 @@ const amqp = require("amqplib");
 const cors = require("cors");
 const crypto = require("crypto");
 const { redisClient } = require("./dbconfig");
+const { enviarCorreo } = require("./mail");
 
 let connection;
 let channel;
@@ -762,6 +763,22 @@ app.post("/test-connection", async (req, res) => {
     if (connection) {
       await connection.end();
     }
+  }
+});
+
+app.post("/enviar-mail", async (req, res) => {
+  const { asunto, texto, email } = req.body;
+
+  if (!asunto || !texto || !email) {
+    return res.status(400).json({ error: "Faltan campos requeridos" });
+  }
+
+  try {
+    await enviarCorreo(asunto, texto, email);
+    res.json({ ok: true, mensaje: "Correo enviado correctamente" });
+  } catch (error) {
+    console.error("❌ Error al enviar el correo:", error);
+    res.status(500).json({ error: "No se pudo enviar el correo" });
   }
 });
 app.get("/ping", (req, res) => {
