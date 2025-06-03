@@ -767,14 +767,14 @@ app.post("/test-connection", async (req, res) => {
 });
 
 app.post("/enviar-mail", async (req, res) => {
-  const { asunto, texto, email } = req.body;
+  const { data, email } = req.body;
 
-  if (!asunto || !texto || !email) {
+  if (!data || !email) {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
 
   try {
-    await enviarCorreo(asunto, texto, email);
+    await enviarCorreo(data, email);
     res.json({ success: true, mensaje: "Correo enviado correctamente" });
   } catch (error) {
     console.error("❌ Error al enviar el correo:", error);
