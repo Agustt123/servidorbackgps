@@ -775,7 +775,7 @@ app.post("/enviar-mail", async (req, res) => {
 
   try {
     await enviarCorreo(asunto, texto, email);
-    res.json({ ok: true, mensaje: "Correo enviado correctamente" });
+    res.json({ success: true, mensaje: "Correo enviado correctamente" });
   } catch (error) {
     console.error("❌ Error al enviar el correo:", error);
     res.status(500).json({ error: "No se pudo enviar el correo" });
