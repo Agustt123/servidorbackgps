@@ -738,6 +738,32 @@ app.post("/check", async (req, res) => {
     res.status(500).json({ ok: false, error: "No se pudo enviar a RabbitMQ" });
   }
 });
+
+app.post("/test-connection", async (req, res) => {
+  const { host, port, user, password } = req.body;
+
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host,
+      port,
+      user,
+      password,
+    });
+
+    // Test simple: ejecutar una query como "SELECT 1"
+    await connection.query("SELECT 1");
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error de conexión:", error.message);
+    res.json({ success: false });
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+});
 app.get("/ping", (req, res) => {
   const currentDate = new Date();
   currentDate.setHours(currentDate.getHours()); // Resta 3 horas
