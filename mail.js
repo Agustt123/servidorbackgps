@@ -21,7 +21,7 @@ async function enviarCorreo(data, destinatario) {
   await transporter.sendMail({
     from: '"Nombre Remitente" <tu_correo@gmail.com>',
     to: destinatario,
-    subject: dataasunto,
+    subject: data.asunto,
     text: data.texto,
     html: `<p>${data.texto}</p>`, // opcional: cuerpo en HTML
   });
