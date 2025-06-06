@@ -20,7 +20,7 @@ async function enviarCorreo(data, destinatario) {
   console.log(data, "dataaa");
 
   await transporter.sendMail({
-    from: `${data.empresa}`,
+    from: `"${data.empresa}" <lightdataargentina@gmail.com>`,
     to: destinatario,
     subject: data.asunto,
     text: data.texto,
