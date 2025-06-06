@@ -17,6 +17,7 @@ async function enviarCorreo(data, destinatario) {
       pass: "sjexjcjixmesdjyv", // usar App Password si es Gmail
     },
   });
+  console.log(data, "dataaa");
 
   await transporter.sendMail({
     from: `${data.empresa}`,
