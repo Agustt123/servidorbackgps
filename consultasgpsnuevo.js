@@ -59,31 +59,61 @@ const pool = mysql.createPool({
     process.exit(1); // Salir de la aplicación si no se puede conectar
   }
 })();
+
+
 async function initRabbitMQ() {
-  if (!connection) {
-    connection = await amqp.connect(rabbitMQUrl);
-    channel = await connection.createChannel();
-    await channel.assertQueue(queue, { durable: true });
-    // console.log("✅ Conectado a RabbitMQ y canal creado");
+  try {
+    if (!connection || connection.connection.stream.destroyed) {
+      connection = await amqp.connect(rabbitMQUrl);
+      connection.on("error", (err) => {
+        console.error("❌ Error en la conexión RabbitMQ:", err.message);
+        connection = null;
+      });
+
+      connection.on("close", () => {
+        console.warn("⚠️ Conexión RabbitMQ cerrada. Intentando reconectar...");
+        connection = null;
+        channel = null;
+        setTimeout(initRabbitMQ, 2000); // Reintenta en 2 segundos
+      });
+
+      channel = await connection.createChannel();
+      channel.on("error", (err) => {
+        console.error("❌ Error en el canal RabbitMQ:", err.message);
+        channel = null;
+      });
+
+      channel.on("close", () => {
+        console.warn("⚠️ Canal RabbitMQ cerrado.");
+        channel = null;
+      });
+
+      await channel.assertQueue(queue, { durable: true });
+      console.log("✅ Conectado a RabbitMQ y canal creado");
+    }
+  } catch (err) {
+    console.error("❌ Error inicializando RabbitMQ:", err.message);
+    setTimeout(initRabbitMQ, 2000); // Reintenta en 2 segundos
   }
 }
 
-// Función para enviar mensajes
 async function sendToRabbitMQ(data) {
   try {
-    if (data.empresa == 270) {
-      console.log("📡 Mensaje enviado:", data);
+    await initRabbitMQ();
+
+    if (!channel) {
+      throw new Error("No hay canal disponible para enviar el mensaje.");
     }
 
-    await initRabbitMQ();
     channel.sendToQueue(queue, Buffer.from(JSON.stringify(data)), {
       persistent: true,
     });
+
     if (data.empresa == 270) {
       console.log("📡 Mensaje enviado:", data);
     }
   } catch (error) {
-    console.error("❌ Error al enviar mensaje a RabbitMQ:", error);
+    console.error("❌ Error al enviar mensaje a RabbitMQ:", error.message);
   }
 }
 
