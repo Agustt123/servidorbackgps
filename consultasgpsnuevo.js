@@ -110,7 +110,7 @@ async function sendToRabbitMQ(data) {
     });
 
     if (data.empresa == 270) {
-      console.log("📡 Mensaje enviado:", data);
+      //     console.log("📡 Mensaje enviado:", data);
     }
   } catch (error) {
     console.error("❌ Error al enviar mensaje a RabbitMQ:", error.message);
@@ -120,7 +120,7 @@ async function sendToRabbitMQ(data) {
 process.on("exit", async () => {
   if (channel) await channel.close();
   if (connection) await connection.close();
-  console.log("🔌 Conexión a RabbitMQ cerrada");
+  //  console.log("🔌 Conexión a RabbitMQ cerrada");
 });
 async function getActualData(connection, data, res, tableName) {
   const query = `SELECT ilat, ilog, bateria, velocidad, DATE_FORMAT(autofecha, '%d/%m/%Y %H:%i') as autofecha 
@@ -451,8 +451,8 @@ async function obtenerrecorridocadete(connection, data, res) {
           const hasta = new Date(
             `${year}-${month}-${day} ${data.hora_hasta}:00`
           ).getTime();
-          console.log(`Desde: ${desde}, Hasta: ${hasta}`, "redisss");
-
+          //        console.log(`Desde: ${desde}, Hasta: ${hasta}`, "redisss");
+          //
           const filteredData = cadeteData.filter((item) => {
             // Convertir el formato de Redis a Date
             const itemDate = new Date(
@@ -714,7 +714,7 @@ app.post("/actualizarlatlog", async (req, res) => {
       dataEntrada.fecha,
     ]);
 
-    console.log({ tableName, desde, hasta, result });
+    //  console.log({ tableName, desde, hasta, result });
 
     res.status(200).json({
       message: "Consulta exitosa",
@@ -745,7 +745,7 @@ app.post("/backgps", async (req, res) => {
 app.post("/check", async (req, res) => {
   const data = req.body;
   const connection = await pool.getConnection();
-  console.log(data);
+  // console.log(data);
 
   if (!data.didempresa || !data.cadete) {
     return res.status(400).json({
@@ -753,7 +753,7 @@ app.post("/check", async (req, res) => {
     });
   }
   try {
-    console.log("entre");
+    //  console.log("entre");
 
     await checkCadete(connection, data, res);
   } catch (error) {
