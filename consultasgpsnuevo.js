@@ -351,18 +351,18 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   // Obtener la fecha en formato YYYY-MM-DD
 
   console.log(data, "data");
-  const data = data.data;
+  const data1 = data.data;
 
-  const fecha = data.fecha; // Por ejemplo, "2025-02-05"
+  const fecha = data1.fecha; // Por ejemplo, "2025-02-05"
   const [year, month, day] = fecha.split("-");
 
   // Generar el nombre de la tabla sin espacios
   const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
   const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha > ?`;
   const [results] = await connection.execute(query, [
-    data.didempresa,
-    data.cadete,
-    `${data.hora_desde}%`,
+    data1.didempresa,
+    data1.cadete,
+    `${data1.hora_desde}%`,
   ]);
   const response = {};
 
