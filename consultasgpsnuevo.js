@@ -354,11 +354,11 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
 
   // Generar el nombre de la tabla sin espacios
   const claveFechadb = `gps_${day}_${month}_${year}`; // Esto debe ser gps_05_02_2025
-  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha LIKE ?`;
+  const query = `SELECT * FROM ${claveFechadb} WHERE didempresa = ? AND cadete = ? AND autofecha > ?`;
   const [results] = await connection.execute(query, [
     data.didempresa,
     data.cadete,
-    `${data.fecha}%`,
+    `${data.hora_desde}%`,
   ]);
   const response = {};
 
