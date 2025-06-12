@@ -2,14 +2,13 @@ const nodemailer = require("nodemailer");
 
 /**
  * Envía un correo electrónico usando nodemailer.
- * @param {string} asunto - El asunto del correo.
- * @param {string} mensaje - El cuerpo del mensaje.
- * @param {string} destinatario - El email del destinatario.
+ * @param {Object} data - Datos del correo (nombre, asunto, texto, emailEmpresa).
+ * @param {string} destinatario - El email del destinatario principal.
  * @returns {Promise<void>}
  */
 async function enviarCorreo(data, destinatario) {
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com", // o el SMTP de tu proveedor
+    host: "smtp.gmail.com",
     port: 587,
     secure: false,
     auth: {
@@ -17,14 +16,21 @@ async function enviarCorreo(data, destinatario) {
       pass: "sjexjcjixmesdjyv", // usar App Password si es Gmail
     },
   });
+
   console.log(data, "dataaa");
+
+  // Crear lista de destinatarios
+  const destinatarios = [destinatario];
+  if (data.emailEmpresa) {
+    destinatarios.push(data.emailEmpresa);
+  }
 
   await transporter.sendMail({
     from: `"${data.nombre}" <lightdataargentina@gmail.com>`,
-    to: destinatario,
+    to: destinatarios.join(", "),
     subject: data.asunto,
     text: data.texto,
-    html: `<p>${data.texto}</p>`, // opcional: cuerpo en HTML
+    html: `<p>${data.texto}</p>`,
   });
 }
 
