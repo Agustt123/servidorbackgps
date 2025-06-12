@@ -349,6 +349,9 @@ function formatFecha(isoString) {
 
 async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
   // Obtener la fecha en formato YYYY-MM-DD
+
+  console.log(data, "data");
+
   const fecha = data.fecha; // Por ejemplo, "2025-02-05"
   const [year, month, day] = fecha.split("-");
 
