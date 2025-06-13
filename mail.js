@@ -18,6 +18,8 @@ async function enviarCorreo(data, destinatario) {
   });
 
   console.log(data, "dataaa");
+  console.log(destinatario, "destinatario");
+
 
   // Crear lista de destinatarios
   const destinatarios = [destinatario];
