@@ -806,11 +806,9 @@ app.post("/enviar-mail", async (req, res) => {
   if (!data || !email) {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
-  const emails = [data.email, data.emailEmpresa]
-  console.log(req.body, "yyyy");
 
   try {
-    await enviarCorreo(data, emails);
+    await enviarCorreo(data, email);
     res.json({ success: true, mensaje: "Correo enviado correctamente" });
   } catch (error) {
     console.error("❌ Error al enviar el correo:", error);
