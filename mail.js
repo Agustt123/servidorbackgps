@@ -26,6 +26,7 @@ async function enviarCorreo(data, destinatario) {
   if (data.emailEmpresa) {
     destinatarios.push(data.emailEmpresa);
   }
+  console.log(destinatarios, "destinatarios");
 
   await transporter.sendMail({
     from: `"${data.nombre}" <lightdataargentina@gmail.com>`,
