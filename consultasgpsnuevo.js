@@ -801,14 +801,14 @@ app.post("/test-connection", async (req, res) => {
 });
 
 app.post("/enviar-mail", async (req, res) => {
-  const { data, email } = req.body;
+  const { data, email, emailEmpresa } = req.body;
 
   if (!data || !email) {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
 
   try {
-    await enviarCorreo(data, email);
+    await enviarCorreo(data, email, emailEmpresa);
     res.json({ success: true, mensaje: "Correo enviado correctamente" });
   } catch (error) {
     console.error("❌ Error al enviar el correo:", error);

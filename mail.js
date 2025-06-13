@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
  * @param {string} destinatario - El email del destinatario principal.
  * @returns {Promise<void>}
  */
-async function enviarCorreo(data, destinatario) {
+async function enviarCorreo(data, destinatario, emailEmpresa) {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
@@ -22,10 +22,8 @@ async function enviarCorreo(data, destinatario) {
 
 
   // Crear lista de destinatarios
-  const destinatarios = [destinatario];
-  if (data.emailEmpresa) {
-    destinatarios.push(data.emailEmpresa);
-  }
+  const destinatarios = [destinatario, emailEmpresa];
+
   console.log(destinatarios, "destinatarios");
 
   await transporter.sendMail({
