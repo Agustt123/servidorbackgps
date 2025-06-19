@@ -221,6 +221,8 @@ async function getAll(connection, data, res, tableName) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
+  console.log(today, "aca estamos ");
+
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
 
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
