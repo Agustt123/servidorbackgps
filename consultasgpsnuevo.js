@@ -219,9 +219,9 @@ async function getAll(connection, data, res, tableName) {
     res.end(JSON.stringify({ error: "Token no provisto" }));
     return;
   }
-
+  const today2 = new Date().toISOString();
   const today = new Date().toISOString().slice(0, 10);
-  console.log(today, "aca estamos ");
+  console.log(today2, "aca estamos ");
 
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
 
