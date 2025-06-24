@@ -65,6 +65,7 @@ async function initRabbitMQ() {
   try {
     if (!connection || connection.connection.stream.destroyed) {
       connection = await amqp.connect(rabbitMQUrl);
+      console.log("conecion creada 2 ");
       connection.on("error", (err) => {
         console.error("❌ Error en la conexión RabbitMQ:", err.message);
         connection = null;

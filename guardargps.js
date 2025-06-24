@@ -201,6 +201,8 @@ async function listenToRabbitMQ() {
           connection_name: "gps_consumer_1", // <- Acá poné un nombre único por script
         },
       });
+      console.log("conecion creada 1 ");
+
 
       channel = await connection.createChannel();
       await channel.prefetch(1000);
