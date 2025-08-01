@@ -553,6 +553,25 @@ async function checkCadete(connection, data) {
   return results.length > 0;
 }
 
+async function cadetesActivo(connection, data) {
+  const query = `SELECT cadete FROM gps_${data.fecha} WHERE didempresa = ?`;
+  const [results] = await connection.execute(query, [data.didempresa]);
+
+  // Usamos un Set para evitar duplicados
+  const cadetesSet = new Set();
+
+  for (const row of results) {
+    if (row.cadete) {
+      cadetesSet.add(row.cadete);
+    }
+  }
+
+  // Convertimos el Set a array y luego a string separado por coma
+  const cadetesUnicos = Array.from(cadetesSet).join(',');
+
+  return cadetesUnicos;
+}
+
 app.post("/check", async (req, res) => {
   const data = req.body;
   const connection = await pool.getConnection();
@@ -816,6 +835,30 @@ app.post("/enviar-mail", async (req, res) => {
   } catch (error) {
     console.error("❌ Error al enviar el correo:", error);
     res.status(500).json({ error: "No se pudo enviar el correo" });
+  }
+});
+
+app.post("/choferesActivos", async (req, res) => {
+  const dataEntrada = req.body;
+
+  try {
+    if (!dataEntrada.fecha || !dataEntrada.didempresa) {
+      return res.status(400).json({
+        error: "Faltan datos requeridos (fecha o didempresa)",
+      });
+    }
+
+    const connection = await pool.getConnection();
+    const cadetes = await cadetesActivo(connection, dataEntrada);
+    connection.release();
+    if (!cadetes) {
+      return res.status(404).json({ error: "No se encontraron cadetes activos" });
+    }
+    res.status(200).json({ estado: true, cadetes: cadetes });
+
+  } catch (error) {
+    console.error("Error al obtener cadetes activos:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 app.get("/ping", (req, res) => {
