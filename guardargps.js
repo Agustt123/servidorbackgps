@@ -93,7 +93,7 @@ async function insertData(connection, data) {
     hora = null,
     precision = null,
     idDispositivo = "",
-    versionApp = "",
+    appVersion = "",
   } = data;
 
   // Validar las coordenadas
@@ -121,7 +121,7 @@ async function insertData(connection, data) {
       hora,
       precision,
       idDispositivo,
-      versionApp,
+      appVersion,
     ]);
 
     if (insertResult.affectedRows > 0) {
