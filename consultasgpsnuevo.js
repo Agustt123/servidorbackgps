@@ -307,7 +307,7 @@ async function getAllById(connection, didCadete, didempresa, tableName) {
   return {
     ilat: row.ilat,
     ilog: row.ilog,
-    autofechaNg: formatDateBA(row.hora), // lo dejás igual por compatibilidad
+    // lo dejás igual por compatibilidad
     hora,                           // <- nuevo campo "HH:mm"
   };
 }
