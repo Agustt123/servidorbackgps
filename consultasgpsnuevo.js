@@ -266,7 +266,7 @@ async function getAll(connection, data, res, tableName) {
 async function getAllById(connection, didCadete, didempresa, tableName) {
   const now = new Date();
   const fiveMinAgo = new Date(now);
-  fiveMinAgo.setMinutes(fiveMinAgo.getMinutes() - 5);
+  fiveMinAgo.setMinutes(fiveMinAgo.getMinutes() - 10);
 
   const hourStart = new Date(now);
   hourStart.setMinutes(0, 0, 0);
@@ -953,7 +953,7 @@ app.get("/cadetes/:didempresa/:didCadete", async (req, res) => {
     if (!result) {
       return res.status(404).json({
         estado: false,
-        error: "Sin datos para ese cadete en los últimos 5 minutos",
+        error: "Sin datos para ese cadete en los últimos 10 minutos",
       });
     }
 
