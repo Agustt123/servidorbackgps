@@ -297,7 +297,7 @@ async function getAllById(connection, didCadete, didempresa, tableName) {
   const row = rows[0];
 
   // 👇 Solo hora y minuto en Buenos Aires (HH:mm)
-  const horaMinBA = new Date(row.hora).toLocaleTimeString("es-AR", {
+  const hora = new Date(row.hora).toLocaleTimeString("es-AR", {
     timeZone: "America/Argentina/Buenos_Aires",
     hour12: false,
     hour: "2-digit",
@@ -305,9 +305,10 @@ async function getAllById(connection, didCadete, didempresa, tableName) {
   });
 
   return {
-    ...row,
+    ilat: row.ilat,
+    ilog: row.ilog,
     autofechaNg: formatDateBA(row.hora), // lo dejás igual por compatibilidad
-    horaMinBA,                           // <- nuevo campo "HH:mm"
+    hora,                           // <- nuevo campo "HH:mm"
   };
 }
 
