@@ -7,6 +7,7 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { redisClient } = require("./dbconfig");
 const { enviarCorreo } = require("./mail");
+const { get } = require("http");
 
 let connection;
 let channel;
@@ -259,6 +260,61 @@ async function getAll(connection, data, res, tableName) {
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(agrupadoPorCadete));
 }
+// Uso esperado:
+// const result = await getAllById(connection, didCadete, didempresa, claveFechaDb);
+
+async function getAllById(connection, didCadete, didempresa, tableName) {
+  // Últimos 5 minutos dentro de la hora actual
+  const now = new Date();
+  const fiveMinAgo = new Date(now);
+  fiveMinAgo.setMinutes(fiveMinAgo.getMinutes() - 5);
+
+  // No cruzar a la hora anterior
+  const hourStart = new Date(now);
+  hourStart.setMinutes(0, 0, 0);
+  const lowerBound = fiveMinAgo < hourStart ? hourStart : fiveMinAgo;
+
+  const query = `
+    SELECT hora, bateria, cadete, didempresa, ilat, ilog, precision_gps
+    FROM ${tableName}
+    WHERE cadete = ?
+      AND didempresa = ?
+      AND ilat != 0 AND ilog != 0
+      AND ilat != '' AND ilog != ''
+      AND ilat IS NOT NULL AND ilog IS NOT NULL
+      AND hora >= ? AND hora <= ?
+    ORDER BY hora DESC
+    LIMIT 1
+  `;
+
+  const [rows] = await connection.execute(query, [
+    didCadete,
+    didempresa,
+    lowerBound,
+    now,
+  ]);
+
+  if (!rows.length) return null;
+
+  const row = rows[0];
+  return {
+    ...row,
+    autofechaNg: formatDateBA(row.hora),
+  };
+}
+
+// Fecha/hora siempre en Buenos Aires: "YYYY-MM-DD HH:mm:ss"
+function formatDateBA(dateString) {
+  return new Date(dateString)
+    .toLocaleString("sv-SE", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour12: false,
+    })
+    .replace("T", " ");
+}
+
+
+
 
 // Función para formatear la fecha en "YYYY-MM-DD HH:MM:SS"
 function formatDate(dateString) {
@@ -861,6 +917,47 @@ app.post("/choferesActivos", async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
+
+// Ejemplo de endpoint con ambos params en el path:
+// GET /cadetes/:didempresa/:didCadete
+app.get("/cadetes/:didempresa/:didCadete", async (req, res) => {
+
+  const didempresa = req.params.didempresa;
+  const didCadete = req.params.didCadete;
+
+  if (!didempresa || !didCadete) {
+    return res.status(400).json({ error: "didempresa y didCadete son requeridos" });
+  }
+
+  // armás la tabla del día como venías haciendo
+  const fecha = new Date();
+  const claveFechaDb = `gps_${fecha.getDate().toString().padStart(2, "0")}_${(fecha.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}_${fecha.getFullYear()}`;
+
+  const connection = await pool.getConnection();
+  try {
+
+    const result = await getAllById(connection, didCadete, didempresa, claveFechaDb);
+
+    if (!result) {
+      return res.status(404).json({
+        estado: false,
+        error: "Sin datos para ese cadete en los últimos 5 minutos",
+      });
+    }
+
+    res.status(200).json({ estado: true, cadete: result });
+  } catch (error) {
+    console.error("Error al procesar cadete:", error);
+    res.status(error.status || 500).json({
+      error: error.message || "Error interno del servidor",
+    });
+  } finally {
+    connection.release();
+  }
+});
+
 app.get("/ping", (req, res) => {
   const currentDate = new Date();
   currentDate.setHours(currentDate.getHours()); // Resta 3 horas
@@ -879,5 +976,5 @@ app.get("/ping", (req, res) => {
 
 // Iniciar el servidor
 app.listen(port, () => {
-  //console.log(`Servidor corriendo en http://localhost:${port}`);
+  console.log(`Servidor corriendo en http://localhost:${port}`);
 });
