@@ -264,12 +264,10 @@ async function getAll(connection, data, res, tableName) {
 // const result = await getAllById(connection, didCadete, didempresa, claveFechaDb);
 
 async function getAllById(connection, didCadete, didempresa, tableName) {
-  // Últimos 5 minutos dentro de la hora actual
   const now = new Date();
   const fiveMinAgo = new Date(now);
   fiveMinAgo.setMinutes(fiveMinAgo.getMinutes() - 5);
 
-  // No cruzar a la hora anterior
   const hourStart = new Date(now);
   hourStart.setMinutes(0, 0, 0);
   const lowerBound = fiveMinAgo < hourStart ? hourStart : fiveMinAgo;
@@ -297,11 +295,22 @@ async function getAllById(connection, didCadete, didempresa, tableName) {
   if (!rows.length) return null;
 
   const row = rows[0];
+
+  // 👇 Solo hora y minuto en Buenos Aires (HH:mm)
+  const horaMinBA = new Date(row.hora).toLocaleTimeString("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return {
     ...row,
-    autofechaNg: formatDateBA(row.hora),
+    autofechaNg: formatDateBA(row.hora), // lo dejás igual por compatibilidad
+    horaMinBA,                           // <- nuevo campo "HH:mm"
   };
 }
+
 
 // Fecha/hora siempre en Buenos Aires: "YYYY-MM-DD HH:mm:ss"
 function formatDateBA(dateString) {
