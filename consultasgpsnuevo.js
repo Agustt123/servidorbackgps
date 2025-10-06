@@ -66,7 +66,7 @@ async function initRabbitMQ() {
   try {
     if (!connection || connection.connection.stream.destroyed) {
       connection = await amqp.connect(rabbitMQUrl);
-      console.log("conecion creada 2 ");
+      //   console.log("conecion creada 2 ");
       connection.on("error", (err) => {
         console.error("❌ Error en la conexión RabbitMQ:", err.message);
         connection = null;
@@ -560,7 +560,7 @@ async function obtenerrecorridocadete(connection, data, res) {
     } catch (error) {
       console.error("Error consultando Redis:", error);
       // Si alguna propiedad de Redis está en null, sigue adelante y consulta la base de datos
-      console.log("Continuando con la consulta a la base de datos...");
+      //  console.log("Continuando con la consulta a la base de datos...");
     }
   }
 

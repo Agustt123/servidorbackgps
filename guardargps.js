@@ -103,7 +103,7 @@ async function insertData(connection, data) {
     (ilat === null && ilong === null) ||
     (ilat === undefined && ilong === undefined)
   ) {
-    console.log(data, "dataaaaaa");
+    //   console.log(data, "dataaaaaa");
     return; // Salir de la función sin insertar
   }
 
@@ -201,7 +201,7 @@ async function listenToRabbitMQ() {
           connection_name: "gps_consumer_1", // <- Acá poné un nombre único por script
         },
       });
-      console.log("conecion creada 1 ");
+      //    console.log("conecion creada 1 ");
 
 
       channel = await connection.createChannel();
@@ -235,10 +235,10 @@ async function listenToRabbitMQ() {
                 channel.ack(msg);
                 break;
               case "xvariable":
-                console.log(
-                  "Datos en dataStore:",
-                  JSON.stringify(dataStore, null, 2)
-                );
+                //  console.log(
+                //    "Datos en dataStore:",
+                //      JSON.stringify(dataStore, null, 2)
+                //     );
                 channel.ack(msg); // Confirmar el mensaje para este caso también
                 break;
               default:
