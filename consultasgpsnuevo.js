@@ -470,6 +470,8 @@ async function obtenerHorasCadetePorFecha(connection, data, res, tableName) {
 async function obtenerrecorridocadete(connection, data, res) {
   const today = new Date().toISOString().slice(0, 10);
   const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+  const today2 = new Date().toISOString();
+  console.log(today2, "todaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaay");
 
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
     res.writeHead(401, { "Content-Type": "application/json" });
