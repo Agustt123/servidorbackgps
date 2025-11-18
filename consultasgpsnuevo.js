@@ -225,7 +225,8 @@ async function getAll(connection, data, res, tableName) {
   now.setHours(now.getHours() - 3);
   const today = now.toISOString().slice(0, 10);
 
-  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+  // const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+  const expectedHash = today;
 
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
     res.writeHead(401, { "Content-Type": "application/json" });
