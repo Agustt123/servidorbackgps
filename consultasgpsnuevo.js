@@ -229,6 +229,7 @@ async function getAll(connection, data, res, tableName) {
   const expectedHash = today;
 
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
+    console.log("expectedHash", expectedHash);
     res.writeHead(401, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
