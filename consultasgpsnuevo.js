@@ -225,8 +225,8 @@ async function getAll(connection, data, res, tableName) {
   now.setHours(now.getHours() - 3);
   const today = now.toISOString().slice(0, 10);
 
-  // const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
-  const expectedHash = today;
+  const expectedHash = crypto.createHash("sha256").update(today).digest("hex");
+  //const expectedHash = today;
 
   if (data.token.trim().toLowerCase() !== expectedHash.toLowerCase()) {
     console.log("expectedHash", expectedHash);
@@ -239,7 +239,7 @@ async function getAll(connection, data, res, tableName) {
     return;
   }
 
-  const query = `SELECT hora,bateria,cadete,didempresa,ilat,ilog,precision_gps FROM ${tableName} 
+  const query = `SELECT hora,bateria,cadete,didempresa,ilat,ilog,precision_gps,velocidad FROM ${tableName} 
                  WHERE superado = 0 
                    AND didempresa = ? 
                    AND ilat != 0 AND ilog != 0 
